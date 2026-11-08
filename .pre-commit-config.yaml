@@ -1,0 +1,60 @@
+# Local checks run before each commit via https://pre-commit.com.
+# See docs/pre-commit-runbook.md.
+repos:
+  # Guardrails against mistakes that are independent of the language.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      # All changes land on a branch and reach main through a pull request.
+      - id: no-commit-to-branch
+        args: [--branch, main]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: detect-private-key
+      - id: check-merge-conflict
+  - repo: local
+    hooks:
+      - id: go-format
+        name: Go formatting
+        entry: just format-check
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: go-vet
+        name: Go vet
+        entry: just vet
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: backend-test
+        name: Backend tests
+        entry: just test
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: backend-build
+        name: Backend build
+        entry: just build
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: frontend-lint
+        name: Frontend lint (ESLint)
+        entry: just lint
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: frontend-typecheck
+        name: Frontend typecheck
+        entry: just typecheck
+        language: system
+        pass_filenames: false
+        always_run: true
+      # Slow, so only run when something that affects how the services start
+      # has been staged.
+      - id: tilt-check
+        name: Tilt smoke test
+        entry: just tilt-check
+        language: system
+        pass_filenames: false
+        files: ^(Tiltfile|justfile|flake\.nix|backend/|frontend/(package\.json|pnpm-lock\.yaml|next\.config|tsconfig|app/))
