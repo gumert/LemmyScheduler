@@ -46,9 +46,20 @@ On every `git commit`, the hooks in
   never becomes healthy. This catches orchestration bugs (wrong working
   directory, restart loops, bad probes) that unit tests, `go build`, and
   ESLint cannot. It is slow, so the hook only runs it when staged files
-  include the `Tiltfile`, `justfile`, `flake.nix`, `backend/`, or frontend
-  dependency/config/app files. It needs ports 8080 and 3000 free, so stop any
-  running `tilt up` first.
+  include the `Tiltfile`, `justfile`, `flake.nix`, `buf.yaml`, `buf.gen.yaml`,
+  `proto/`, `backend/`, or frontend dependency/config/app/`src/` files. It
+  needs ports 8080 and 3000 free, so stop any running `tilt up` first.
+- `just generate-check` regenerates the API code from `proto/` into a
+  temporary directory and fails if it differs from the committed
+  `backend/internal/gen` and `frontend/src/gen`. Generated code is committed,
+  so a hand edit, a stray file, or a `.proto` change without regenerating would
+  otherwise go unnoticed and make the Go and TypeScript sides disagree with the
+  API definition. It compares with `diff -r` rather than `git diff` so
+  untracked and stale files are caught, and it never writes into the working
+  tree. The fix is always `just generate`, then commit the result.
+  `end-of-file-fixer` and `trailing-whitespace` skip the generated
+  directories because the generators' output must stay byte-for-byte
+  identical.
 
 These checks were chosen because they catch the most common review friction
 (formatting, compile errors, lint nits, and broken local startup) before a PR

@@ -31,6 +31,16 @@ just install-hooks
 
 They run fast local checks on each commit and refuse commits to `main`. See [docs/pre-commit-runbook.md](docs/pre-commit-runbook.md).
 
+## Generating the API
+
+The API is declared in protobuf under `proto/` and served with
+[Connect](https://connectrpc.com). Generated Go (`backend/internal/gen`) and
+TypeScript (`frontend/src/gen`) code is committed. After changing a `.proto`
+file, run `just generate` and commit the result. `just check` (and the
+pre-commit hook) runs `just proto-lint` and `just generate-check`, which fail if
+the committed code is out of date. The plugins come from the Nix shell, so
+generation works offline. Do not hand-edit generated files.
+
 ## Contributing
 
 - Keep pull requests small and focused.

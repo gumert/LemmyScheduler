@@ -17,9 +17,26 @@ LemmyScheduler is a locally hosted application for preparing and publishing cont
 - Run formatting, tests, and builds before opening a pull request.
 - Treat generated code as disposable: document its source and avoid hand-editing generated files.
 
+## Guiding principles
+
+These apply to every change, and to every contributor, human or AI agent.
+
+1. **Make the repo easy for humans to reason about.**
+   - Prefer small, explicit, boring solutions over clever or implicit ones.
+   - Keep one source of truth per concern (for example, the Nix shell for tool versions) and link to it rather than duplicating it.
+   - Document the "why" for non-obvious decisions, such as in [docs/pre-commit-runbook.md](docs/pre-commit-runbook.md).
+2. **Protect developers of all species from themselves.**
+   - Assume humans and agents will make mistakes, so enforce rules with tooling instead of memory or goodwill.
+   - Use layered guardrails: local pre-commit hooks for fast feedback, CI as the full check, and the GitHub ruleset in [.github/rulesets/protect-main.json](.github/rulesets/protect-main.json) as the server-side backstop, since local hooks can be bypassed.
+   - Prefer failing loudly and early over silently doing the wrong thing.
+   - Do not bypass a guardrail (`--no-verify`, force pushes, weakening a check) to get a change through. Fix the cause or ask.
+   - Keep secrets and destructive actions behind explicit, deliberate steps.
+
 ## Current scope
 
 The initial skeleton intentionally does not implement Lemmy authentication, Lemmy API calls, persistence, scheduling, retries, or production deployment. Preserve that boundary unless a change explicitly expands the scope.
+
+An RPC layer is being added: the API is declared in protobuf under `proto/` and served with Connect-RPC. Generated Go (`backend/internal/gen`) and TypeScript (`frontend/src/gen`) code is committed and produced by `just generate`; `just generate-check` fails on drift. Never hand-edit generated files.
 
 ## Validation
 

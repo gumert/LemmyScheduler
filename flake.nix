@@ -24,6 +24,10 @@
             just
             pre-commit
             figlet
+            buf
+            protoc-gen-go
+            protoc-gen-connect-go
+            protoc-gen-es
           ];
 
           shellHook = ''
