@@ -1,6 +1,32 @@
 set shell := ["bash", "-cu"]
 
-check: format-check vet test build lint typecheck frontend-build tilt-check
+check: proto-lint generate-check format-check vet test build lint typecheck frontend-build tilt-check
+
+# Regenerate the committed Go and TypeScript API code from proto/.
+generate:
+    buf generate
+
+proto-lint:
+    buf lint
+
+# Regenerate into a temp dir and compare with the committed output. Never
+# writes into the working tree. Uses diff -r (not git diff) so untracked and
+# stale files are caught too.
+[script("bash")]
+generate-check:
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+    buf generate --output "$tmp"
+    status=0
+    for dir in backend/internal/gen frontend/src/gen; do
+        mkdir -p "$tmp/$dir"
+        diff -r "$tmp/$dir" "$dir" || status=1
+    done
+    if [ "$status" -ne 0 ]; then
+        echo "Generated API code is out of date (run 'just generate' and commit the result)." >&2
+        exit 1
+    fi
 
 # Smoke test: boot both services exactly as `tilt up` does and fail if any
 # resource errors or crashes, or never becomes healthy. The Tiltfile installs

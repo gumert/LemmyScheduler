@@ -1,0 +1,21 @@
+# Generated code is committed; `just generate` regenerates it and
+# `just generate-check` fails if it has drifted from proto/.
+# Plugins come from the Nix dev shell (local:), so generation is offline.
+# `out:` paths are relative to the repo root on purpose: `buf generate
+# --output DIR` prepends DIR, which lets generate-check write to a temp dir.
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/gumert/LemmyScheduler/backend/internal/gen
+plugins:
+  - local: protoc-gen-go
+    out: backend/internal/gen
+    opt: paths=source_relative
+  - local: protoc-gen-connect-go
+    out: backend/internal/gen
+    opt: paths=source_relative
+  - local: protoc-gen-es
+    out: frontend/src/gen
+    opt: target=ts

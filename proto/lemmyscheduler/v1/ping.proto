@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package lemmyscheduler.v1;
+
+// PingService is a disposable placeholder so code generation has something to
+// generate. Replace it once a real service exists.
+service PingService {
+  // Ping returns a static message.
+  rpc Ping(PingRequest) returns (PingResponse);
+}
+
+message PingRequest {}
+
+message PingResponse {
+  string message = 1;
+}
