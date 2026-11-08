@@ -41,6 +41,21 @@ pre-commit hook) runs `just proto-lint` and `just generate-check`, which fail if
 the committed code is out of date. The plugins come from the Nix shell, so
 generation works offline. Do not hand-edit generated files.
 
+## Configuration
+
+| Variable | Used by | Default | Purpose |
+| --- | --- | --- | --- |
+| `LISTEN_ADDR` | backend | `:8080` | Address the backend listens on. |
+| `CORS_ALLOWED_ORIGIN` | backend | `http://localhost:3000` | The single browser origin allowed to call the API. Only an exact match is echoed back (never `*`), and preflights from other origins get a 403. CORS only controls what browsers expose; it is not authentication. |
+| `NEXT_PUBLIC_API_URL` | frontend | `http://localhost:8080` | Base URL of the backend, read only in `frontend/src/api/client.ts`. |
+
+`NEXT_PUBLIC_API_URL` is inlined at build time, so a production build needs it
+set when `next build` runs; changing it afterwards has no effect.
+
+`tilt up` sets all three explicitly. If CORS becomes a problem, the planned
+fallback is a Next `rewrites()` proxy: point the client base URL at `/api` so
+the browser only talks to the frontend's origin.
+
 ## Contributing
 
 - Keep pull requests small and focused.
