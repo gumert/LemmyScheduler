@@ -1,0 +1,52 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+  background: #10131a;
+  color: #f4f4f5;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  display: grid;
+  min-height: 100vh;
+  place-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  max-width: 46rem;
+  margin: auto;
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(3rem, 10vw, 6rem);
+  letter-spacing: -0.07em;
+}
+
+p {
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+
+.eyebrow {
+  color: #8dd6c0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.muted {
+  color: #a1a1aa;
+  font-size: 1rem;
+}
