@@ -8,11 +8,14 @@ import (
 	"time"
 )
 
+// noEnv is a getenv that reports every variable as unset.
+func noEnv(string) string { return "" }
+
 func TestMuxHealthz(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	res := httptest.NewRecorder()
 
-	newMux().ServeHTTP(res, req)
+	newMux(noEnv).ServeHTTP(res, req)
 
 	if res.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
@@ -40,7 +43,7 @@ func TestMuxRejectsUnroutedRequests(t *testing.T) {
 			req := httptest.NewRequest(tt.method, tt.path, nil)
 			res := httptest.NewRecorder()
 
-			newMux().ServeHTTP(res, req)
+			newMux(noEnv).ServeHTTP(res, req)
 
 			if res.Code != tt.want {
 				t.Fatalf("status = %d, want %d", res.Code, tt.want)
@@ -50,7 +53,7 @@ func TestMuxRejectsUnroutedRequests(t *testing.T) {
 }
 
 func TestNewServerSetsTimeouts(t *testing.T) {
-	srv := newServer(":0")
+	srv := newServer(":0", noEnv)
 	if srv.ReadHeaderTimeout == 0 || srv.ReadTimeout == 0 || srv.WriteTimeout == 0 || srv.IdleTimeout == 0 {
 		t.Fatalf("server timeouts must all be set: %+v", srv)
 	}
@@ -59,7 +62,7 @@ func TestNewServerSetsTimeouts(t *testing.T) {
 func TestRunShutsDownWhenContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	go func() { done <- run(ctx, "127.0.0.1:0") }()
+	go func() { done <- run(ctx, "127.0.0.1:0", noEnv) }()
 
 	cancel()
 
