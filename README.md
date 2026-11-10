@@ -21,7 +21,19 @@ tilt up
 
 `direnv allow` loads the project's Nix dev shell automatically (see [.envrc](.envrc)). Without direnv, run `nix develop` manually instead before using `tilt`, `just`, `go`, or `pnpm`.
 
-`tilt up` starts the backend and frontend and opens a local web UI you can use to reach both.
+`tilt up` starts PostgreSQL, the backend and the frontend, and opens a local web UI you can use to reach them.
+
+## Local database
+
+`tilt up` runs PostgreSQL 17 from the Nix shell (not a container) on `127.0.0.1:5433`, and creates the `lemmyscheduler` database.
+
+- Connection string: `postgres://lemmyscheduler@127.0.0.1:5433/lemmyscheduler?sslmode=disable`
+- Port `5433` avoids clashing with a Postgres already running on the default port `5432`.
+- Data is kept in `target/postgres/` (git-ignored). Set `POSTGRES_DATA_DIR` to use another directory.
+- Authentication is `trust` and the server listens on loopback only, so there is no password to manage. Do not expose this instance beyond your machine.
+- The major version is pinned in [flake.nix](flake.nix). A data directory only opens with the version that created it, so changing the pin needs `pg_upgrade` or a reset.
+- To reset the database, stop `tilt up` with Ctrl-C and run `rm -rf target/postgres`.
+- `just tilt-check` (part of `just check`) uses a temporary data directory, and needs ports 8080, 3000 and 5433 free.
 
 Then install the git hooks once per clone:
 
