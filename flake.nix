@@ -28,6 +28,10 @@
             protoc-gen-go
             protoc-gen-connect-go
             protoc-gen-es
+            # Pinned to a major version on purpose: a data directory only opens
+            # with the major version that created it. Bump it deliberately
+            # (pg_upgrade, or reset target/postgres).
+            postgresql_17
           ];
 
           shellHook = ''
