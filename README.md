@@ -32,6 +32,7 @@ tilt up
 - Data is kept in `target/postgres/` (git-ignored). Set `POSTGRES_DATA_DIR` to use another directory.
 - Authentication is `trust` and the server listens on loopback only, so there is no password to manage. Do not expose this instance beyond your machine.
 - The major version is pinned in [flake.nix](flake.nix). A data directory only opens with the version that created it, so changing the pin needs `pg_upgrade` or a reset.
+- The backend applies the migrations in `backend/migrations/` (embedded in the binary) at startup, so the same path runs locally and when deployed. A failed or dirty migration stops the backend with an error; it never forces a version.
 - To reset the database, stop `tilt up` with Ctrl-C and run `rm -rf target/postgres`.
 - `just tilt-check` (part of `just check`) uses a temporary data directory, and needs ports 8080, 3000 and 5433 free.
 
@@ -58,13 +59,14 @@ generation works offline. Do not hand-edit generated files.
 | Variable | Used by | Default | Purpose |
 | --- | --- | --- | --- |
 | `LISTEN_ADDR` | backend | `:8080` | Address the backend listens on. |
+| `DATABASE_URL` | backend | none (required) | `postgres://` URL of the database. The backend exits at startup if it is unset, then applies any pending migrations before it listens. A deployed URL should use `sslmode=require` or stricter. |
 | `CORS_ALLOWED_ORIGIN` | backend | `http://localhost:3000` | The single browser origin allowed to call the API. Only an exact match is echoed back (never `*`), and preflights from other origins get a 403. CORS only controls what browsers expose; it is not authentication. |
 | `NEXT_PUBLIC_API_URL` | frontend | `http://localhost:8080` | Base URL of the backend, read only in `frontend/src/api/client.ts`. |
 
 `NEXT_PUBLIC_API_URL` is inlined at build time, so a production build needs it
 set when `next build` runs; changing it afterwards has no effect.
 
-`tilt up` sets all three explicitly. If CORS becomes a problem, the planned
+`tilt up` sets all four explicitly. If CORS becomes a problem, the planned
 fallback is a Next `rewrites()` proxy: point the client base URL at `/api` so
 the browser only talks to the frontend's origin.
 

@@ -62,7 +62,7 @@ func TestNewServerSetsTimeouts(t *testing.T) {
 func TestRunShutsDownWhenContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	go func() { done <- run(ctx, "127.0.0.1:0", noEnv) }()
+	go func() { done <- run(ctx, "127.0.0.1:0", testEnv, (&fakeDeps{}).deps()) }()
 
 	cancel()
 

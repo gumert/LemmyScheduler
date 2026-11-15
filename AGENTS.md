@@ -34,9 +34,15 @@ These apply to every change, and to every contributor, human or AI agent.
 
 ## Current scope
 
-The initial skeleton intentionally does not implement Lemmy authentication, Lemmy API calls, persistence, scheduling, retries, or production deployment. Preserve that boundary unless a change explicitly expands the scope.
+A PostgreSQL database and one placeholder table exist (migrations in `backend/migrations/`, applied by the backend at startup). The project intentionally does not yet implement Lemmy authentication, Lemmy API calls, scheduling, retries, or production deployment. Preserve that boundary unless a change explicitly expands the scope.
 
 An RPC layer is being added: the API is declared in protobuf under `proto/` and served with Connect-RPC. Generated Go (`backend/internal/gen`) and TypeScript (`frontend/src/gen`) code is committed and produced by `just generate`; `just generate-check` fails on drift. Never hand-edit generated files.
+
+## Database conventions
+
+- Migrations are append-only: never edit one that has been applied; add a new numbered migration. Every `up` needs a `down` (a test enforces this), and down migrations are never run automatically.
+- `DATABASE_URL` is required and has no default. Do not add a fallback to localhost, and keep credentials out of the repo.
+- Put database-touching code behind small injected seams and test it with hand-written fakes. Real SQL is only exercised by `just tilt-check`, which uses a throwaway Postgres directory and needs ports 8080, 3000 and 5433 free.
 
 ## Validation
 
