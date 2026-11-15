@@ -15,7 +15,7 @@ func TestMuxHealthz(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	res := httptest.NewRecorder()
 
-	newMux(noEnv).ServeHTTP(res, req)
+	newMux(noEnv, nil).ServeHTTP(res, req)
 
 	if res.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
@@ -43,7 +43,7 @@ func TestMuxRejectsUnroutedRequests(t *testing.T) {
 			req := httptest.NewRequest(tt.method, tt.path, nil)
 			res := httptest.NewRecorder()
 
-			newMux(noEnv).ServeHTTP(res, req)
+			newMux(noEnv, nil).ServeHTTP(res, req)
 
 			if res.Code != tt.want {
 				t.Fatalf("status = %d, want %d", res.Code, tt.want)
@@ -53,7 +53,7 @@ func TestMuxRejectsUnroutedRequests(t *testing.T) {
 }
 
 func TestNewServerSetsTimeouts(t *testing.T) {
-	srv := newServer(":0", noEnv)
+	srv := newServer(":0", noEnv, nil)
 	if srv.ReadHeaderTimeout == 0 || srv.ReadTimeout == 0 || srv.WriteTimeout == 0 || srv.IdleTimeout == 0 {
 		t.Fatalf("server timeouts must all be set: %+v", srv)
 	}
