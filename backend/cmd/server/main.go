@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,21 +12,80 @@ import (
 	"time"
 
 	"github.com/gumert/LemmyScheduler/backend/internal/api"
+	"github.com/gumert/LemmyScheduler/backend/internal/db"
 	"github.com/gumert/LemmyScheduler/backend/internal/gen/lemmyscheduler/v1/lemmyschedulerv1connect"
 )
 
+// store is the part of the database connection the server manages. It is an
+// interface so tests can substitute a fake.
+type store interface {
+	Close()
+}
+
+// deps are the database operations run needs, injected so tests can fake them.
+type deps struct {
+	// migrate brings the schema up to date.
+	migrate func(ctx context.Context, databaseURL string) error
+	// open connects to the database and verifies the connection.
+	open func(ctx context.Context, databaseURL string) (store, error)
+}
+
+// realDeps wires in the real golang-migrate and pgx implementations.
+func realDeps() deps {
+	return deps{
+		migrate: db.Migrate,
+		open: func(ctx context.Context, databaseURL string) (store, error) {
+			pool, err := db.Open(ctx, databaseURL)
+			if err != nil {
+				// Return an untyped nil, not a nil *pgxpool.Pool in a non-nil interface.
+				return nil, err
+			}
+			return pool, nil
+		},
+	}
+}
+
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	err := run(ctx, listenAddr(os.Getenv), os.Getenv)
+	err := run(ctx, listenAddr(os.Getenv), os.Getenv, realDeps())
 	stop()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-// run serves HTTP on addr until ctx is cancelled, then drains in-flight
-// requests before returning. It returns nil on a clean shutdown.
-func run(ctx context.Context, addr string, getenv func(string) string) error {
+// databaseURL returns the required DATABASE_URL. There is deliberately no
+// default: a silent fallback to localhost could point a deployment at the
+// wrong database.
+func databaseURL(getenv func(string) string) (string, error) {
+	dsn := getenv("DATABASE_URL")
+	if dsn == "" {
+		return "", errors.New("DATABASE_URL is not set")
+	}
+	return dsn, nil
+}
+
+// run migrates the database, connects to it, then serves HTTP on addr until
+// ctx is cancelled, then drains in-flight requests and closes the database
+// before returning. The server only starts listening after migrations succeed,
+// so a passing readiness probe implies the schema is current. It returns nil
+// on a clean shutdown.
+func run(ctx context.Context, addr string, getenv func(string) string, d deps) error {
+	dsn, err := databaseURL(getenv)
+	if err != nil {
+		return err
+	}
+	if err := d.migrate(ctx, dsn); err != nil {
+		return fmt.Errorf("migrate database: %w", err)
+	}
+	st, err := d.open(ctx, dsn)
+	if err != nil {
+		return fmt.Errorf("open database: %w", err)
+	}
+	// Deferred so the store closes after srv.Shutdown has drained requests, and
+	// also when the server fails to start.
+	defer st.Close()
+
 	srv := newServer(addr, getenv)
 
 	errCh := make(chan error, 1)

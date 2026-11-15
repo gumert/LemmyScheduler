@@ -46,12 +46,15 @@ local_resource(
 # set explicitly so a value exported in a developer's shell cannot move the
 # backend away from the port the readiness probe checks. CORS_ALLOWED_ORIGIN is
 # the frontend's origin, built from the same port constant as its probe.
+# DATABASE_URL is required by the backend and is built from the Postgres port
+# constant; the backend migrates the schema before it starts listening.
 local_resource(
     'backend',
     serve_cmd='go -C backend run ./cmd/server',
     serve_env={
         'LISTEN_ADDR': ':%d' % BACKEND_PORT,
         'CORS_ALLOWED_ORIGIN': 'http://localhost:%d' % FRONTEND_PORT,
+        'DATABASE_URL': 'postgres://lemmyscheduler@127.0.0.1:%d/lemmyscheduler?sslmode=disable' % POSTGRES_PORT,
     },
     deps=['backend'],
     # The backend starts only once the database exists.
