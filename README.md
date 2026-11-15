@@ -35,6 +35,7 @@ tilt up
 - The backend applies the migrations in `backend/migrations/` (embedded in the binary) at startup, so the same path runs locally and when deployed. A failed or dirty migration stops the backend with an error; it never forces a version.
 - To reset the database, stop `tilt up` with Ctrl-C and run `rm -rf target/postgres`.
 - `just tilt-check` (part of `just check`) uses a temporary data directory, and needs ports 8080, 3000 and 5433 free.
+- PostgreSQL-backed scheduled-post tests create and drop a unique schema. Run them with `TEST_DATABASE_URL=postgres://lemmyscheduler@127.0.0.1:5433/lemmyscheduler?sslmode=disable just test-db` while a local database is available.
 
 Then install the git hooks once per clone:
 

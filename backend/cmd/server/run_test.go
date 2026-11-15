@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gumert/LemmyScheduler/backend/internal/scheduledposts"
 )
 
 const testDatabaseURL = "postgres://fake@127.0.0.1:1/fake"
@@ -29,6 +31,8 @@ func (s fakeStore) Close() {
 		s.f.onClose()
 	}
 }
+
+func (fakeStore) ScheduledPosts() scheduledposts.Store { return nil }
 
 // fakeDeps records the order of calls and the URLs they received. run calls
 // every method on its own goroutine, so tests read the fields only after run

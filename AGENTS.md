@@ -2,7 +2,7 @@
 
 ## Project shape
 
-LemmyScheduler is a locally hosted application for preparing and publishing content to Lemmy on a schedule. The repository currently contains a small Go backend, a Next.js frontend, Nix development tooling, and Tilt orchestration.
+LemmyScheduler is a locally hosted, self-hosted hobby application for preparing content and publishing it to Lemmy on a schedule. It has a Go backend (Connect-RPC over PostgreSQL), a Next.js frontend, Nix development tooling, and Tilt orchestration. The eventual deployment target is a container on a Synology NAS.
 
 ## Working agreements
 
@@ -32,17 +32,33 @@ These apply to every change, and to every contributor, human or AI agent.
    - Do not bypass a guardrail (`--no-verify`, force pushes, weakening a check) to get a change through. Fix the cause or ask.
    - Keep secrets and destructive actions behind explicit, deliberate steps.
 
-## Current scope
+## Product direction
 
-A PostgreSQL database and one placeholder table exist (migrations in `backend/migrations/`, applied by the backend at startup). The project intentionally does not yet implement Lemmy authentication, Lemmy API calls, scheduling, retries, or production deployment. Preserve that boundary unless a change explicitly expands the scope.
+The frontend is an inbox-style list of scheduled posts: open one to edit it, create new ones, and apply bulk actions (delete, pause, delay). The backend stores posts in PostgreSQL and publishes them to a single Lemmy account at their scheduled time. Lemmy login, Lemmy API calls, scheduling and retries are in scope; build them incrementally, one focused PR at a time.
 
-An RPC layer is being added: the API is declared in protobuf under `proto/` and served with Connect-RPC. Generated Go (`backend/internal/gen`) and TypeScript (`frontend/src/gen`) code is committed and produced by `just generate`; `just generate-check` fails on drift. Never hand-edit generated files.
+A post moves through `draft`, `scheduled`, `paused`, `posting`, `posted`, `needs_review`, `failed`. Only `draft`, `scheduled` and `paused` are user-editable; the rest are scheduler-owned and read-only to users except through explicit recovery actions.
+
+Posting safety rules apply to all scheduling and Lemmy code. The worst failure is spamming Lemmy, so prefer missing a post over duplicating one:
+
+- A post is claimed in the database before Lemmy is called. A post left mid-flight by a crash is never retried automatically; it needs human review.
+- Overdue posts after downtime or failure are never burst-posted. Missing the posting window delays the queue instead.
+- A global rate limit and a persisted pause (circuit breaker) apply regardless of schedule.
+- Only one poster runs at a time.
+
+Deliberate non-goals, so nobody adds them speculatively: recurring posts, multiple Lemmy accounts, 2FA-protected Lemmy accounts, remote or multi-user hosting, a durable-execution engine such as Temporal, database backups, and persisting Lemmy session tokens (the backend logs in when needed and keeps the token in memory). The Lemmy password is stored in the database in plain text: this is a single-user, locally hosted app, and the API must never return it.
+
+User-uploaded images are stored as `bytea` in their own table, capped in size, and kept out of list queries. They are uploaded to Lemmy only immediately before posting, never at draft time.
+
+Production deployment (the NAS container) is a planned, separate piece of work; do not couple earlier changes to it.
+
+The API is declared in protobuf under `proto/` and served with Connect-RPC. Generated Go (`backend/internal/gen`) and TypeScript (`frontend/src/gen`) code is committed and produced by `just generate`; `just generate-check` fails on drift. Never hand-edit generated files.
 
 ## Database conventions
 
 - Migrations are append-only: never edit one that has been applied; add a new numbered migration. Every `up` needs a `down` (a test enforces this), and down migrations are never run automatically.
 - `DATABASE_URL` is required and has no default. Do not add a fallback to localhost, and keep credentials out of the repo.
-- Put database-touching code behind small injected seams and test it with hand-written fakes. Real SQL is only exercised by `just tilt-check`, which uses a throwaway Postgres directory and needs ports 8080, 3000 and 5433 free.
+- Put database-touching code behind small injected seams and test it with hand-written fakes. Fakes cannot validate SQL, so queries whose correctness matters (for example claiming a post for publishing) may also have tests that run against a real Postgres. Gate those on `TEST_DATABASE_URL` so `just check` still works without a database. `just tilt-check` also exercises real migrations and needs ports 8080, 3000 and 5433 free; it uses a throwaway Postgres directory.
+- Paginate large lists with keyset pagination (a sort key plus `id`, opaque page token), not offset, so lists stay fast as history grows.
 
 ## Validation
 

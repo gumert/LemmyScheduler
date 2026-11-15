@@ -104,6 +104,16 @@ vet:
 test:
     go -C backend test ./...
 
+# Runs the scheduled-post persistence tests against a database specified by
+# TEST_DATABASE_URL. The test isolates itself in a unique schema.
+[script("bash")]
+test-db:
+    if ! printenv TEST_DATABASE_URL >/dev/null; then
+        echo "TEST_DATABASE_URL must be set to run PostgreSQL integration tests." >&2
+        exit 1
+    fi
+    go -C backend test ./internal/db -run '^TestScheduledPostStorePostgres$' -count=1
+
 build:
     go -C backend build -o /dev/null ./...
 

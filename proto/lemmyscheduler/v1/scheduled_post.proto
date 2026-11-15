@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package lemmyscheduler.v1;
+
+import "google/protobuf/timestamp.proto";
+
+enum ScheduledPostStatus {
+  SCHEDULED_POST_STATUS_UNSPECIFIED = 0;
+  SCHEDULED_POST_STATUS_DRAFT = 1;
+  SCHEDULED_POST_STATUS_SCHEDULED = 2;
+  SCHEDULED_POST_STATUS_PAUSED = 3;
+  SCHEDULED_POST_STATUS_POSTING = 4;
+  SCHEDULED_POST_STATUS_POSTED = 5;
+  SCHEDULED_POST_STATUS_NEEDS_REVIEW = 6;
+  SCHEDULED_POST_STATUS_FAILED = 7;
+}
+
+message ScheduledPost {
+  int64 id = 1;
+  string title = 2;
+  string body = 3;
+  string url = 4;
+  string community = 5;
+  bool nsfw = 6;
+  ScheduledPostStatus status = 7;
+  google.protobuf.Timestamp scheduled_at = 8;
+  google.protobuf.Timestamp posted_at = 9;
+  string lemmy_post_url = 10;
+  reserved 11;
+  reserved "version";
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+message ScheduledPostInput {
+  string title = 1;
+  string body = 2;
+  string url = 3;
+  string community = 4;
+  bool nsfw = 5;
+  ScheduledPostStatus status = 6;
+  google.protobuf.Timestamp scheduled_at = 7;
+}
+
+message CreateScheduledPostRequest {
+  ScheduledPostInput scheduled_post = 1;
+}
+
+message CreateScheduledPostResponse {
+  ScheduledPost scheduled_post = 1;
+}
+
+message GetScheduledPostRequest {
+  int64 id = 1;
+}
+
+message GetScheduledPostResponse {
+  ScheduledPost scheduled_post = 1;
+}
+
+message ListScheduledPostsRequest {
+  repeated ScheduledPostStatus statuses = 1;
+  bool descending = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListScheduledPostsResponse {
+  repeated ScheduledPost scheduled_posts = 1;
+  string next_page_token = 2;
+}
+
+message UpdateScheduledPostRequest {
+  int64 id = 1;
+  reserved 2;
+  reserved "version";
+  ScheduledPostInput scheduled_post = 3;
+}
+
+message UpdateScheduledPostResponse {
+  ScheduledPost scheduled_post = 1;
+}
+
+message DeleteScheduledPostRequest {
+  int64 id = 1;
+}
+
+message DeleteScheduledPostResponse {}
+
+service ScheduledPostService {
+  rpc CreateScheduledPost(CreateScheduledPostRequest) returns (CreateScheduledPostResponse);
+  rpc GetScheduledPost(GetScheduledPostRequest) returns (GetScheduledPostResponse);
+  rpc ListScheduledPosts(ListScheduledPostsRequest) returns (ListScheduledPostsResponse);
+  rpc UpdateScheduledPost(UpdateScheduledPostRequest) returns (UpdateScheduledPostResponse);
+  rpc DeleteScheduledPost(DeleteScheduledPostRequest) returns (DeleteScheduledPostResponse);
+}
