@@ -46,6 +46,11 @@ func (s scheduledPostStore) GetScheduledPost(ctx context.Context, id int64) (sch
 	if err != nil {
 		return scheduledposts.ScheduledPost{}, fmt.Errorf("db: get scheduled post: %w", err)
 	}
+	posts := []scheduledposts.ScheduledPost{post}
+	if err := s.loadImageMetadata(ctx, posts); err != nil {
+		return scheduledposts.ScheduledPost{}, err
+	}
+	post = posts[0]
 	return post, nil
 }
 
@@ -93,6 +98,10 @@ func (s scheduledPostStore) ListScheduledPosts(ctx context.Context, options sche
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("db: list scheduled posts: %w", err)
 	}
+	rows.Close()
+	if err := s.loadImageMetadata(ctx, posts); err != nil {
+		return nil, err
+	}
 	return posts, nil
 }
 
@@ -103,11 +112,26 @@ func (s scheduledPostStore) UpdateScheduledPost(ctx context.Context, post schedu
 		WHERE id = $1 AND status IN ('draft', 'scheduled', 'paused', 'failed')
 		RETURNING id, title, body, url, community, nsfw, status, scheduled_at, posted_at,
 		          lemmy_post_url, created_at, updated_at`
-	updated, err := scanScheduledPost(s.pool.QueryRow(ctx, query,
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return scheduledposts.ScheduledPost{}, fmt.Errorf("db: begin update scheduled post: %w", err)
+	}
+	defer tx.Rollback(context.Background())
+	updated, err := scanScheduledPost(tx.QueryRow(ctx, query,
 		post.ID, post.Title, post.Body, post.URL, post.Community, post.NSFW, string(post.Status), post.ScheduledAt,
 	))
 	if err == nil {
-		return updated, nil
+		if err := reconcileBodyImages(ctx, tx, updated.ID, updated.Body); err != nil {
+			return scheduledposts.ScheduledPost{}, err
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return scheduledposts.ScheduledPost{}, fmt.Errorf("db: commit update scheduled post: %w", err)
+		}
+		posts := []scheduledposts.ScheduledPost{updated}
+		if err := s.loadImageMetadata(ctx, posts); err != nil {
+			return scheduledposts.ScheduledPost{}, err
+		}
+		return posts[0], nil
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return scheduledposts.ScheduledPost{}, fmt.Errorf("db: update scheduled post: %w", err)
@@ -121,6 +145,84 @@ func (s scheduledPostStore) UpdateScheduledPost(ctx context.Context, post schedu
 		return scheduledposts.ScheduledPost{}, scheduledposts.ErrNotEditable
 	}
 	return scheduledposts.ScheduledPost{}, errors.New("db: scheduled post update affected no row")
+}
+
+// reconcileBodyImages runs inside the update transaction, which holds the post
+// row lock. It rejects body references to images the post does not own and
+// deletes stored images that are neither referenced nor the title image.
+func reconcileBodyImages(ctx context.Context, tx pgx.Tx, postID int64, body string) error {
+	var titleImageID *int64
+	if err := tx.QueryRow(ctx, `SELECT title_image_id FROM scheduled_posts WHERE id = $1`, postID).Scan(&titleImageID); err != nil {
+		return fmt.Errorf("db: read title image: %w", err)
+	}
+	referenced := scheduledposts.BodyImageIDs(body)
+	rows, err := tx.Query(ctx, `SELECT id FROM post_images WHERE scheduled_post_id = $1`, postID)
+	if err != nil {
+		return fmt.Errorf("db: list post images: %w", err)
+	}
+	owned := make(map[int64]struct{})
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return fmt.Errorf("db: scan post image: %w", err)
+		}
+		owned[id] = struct{}{}
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("db: list post images: %w", err)
+	}
+	for _, id := range referenced {
+		if _, ok := owned[id]; !ok {
+			return &scheduledposts.ValidationError{Field: "body", Message: fmt.Sprintf("references unknown image %d", id)}
+		}
+	}
+	if referenced == nil {
+		referenced = []int64{}
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM post_images
+		WHERE scheduled_post_id = $1 AND id <> ALL($2::bigint[]) AND id IS DISTINCT FROM $3::bigint`,
+		postID, referenced, titleImageID); err != nil {
+		return fmt.Errorf("db: delete unreferenced images: %w", err)
+	}
+	return nil
+}
+
+func (s scheduledPostStore) loadImageMetadata(ctx context.Context, posts []scheduledposts.ScheduledPost) error {
+	if len(posts) == 0 {
+		return nil
+	}
+	ids := make([]int64, len(posts))
+	byID := make(map[int64]*scheduledposts.ScheduledPost, len(posts))
+	for i := range posts {
+		ids[i] = posts[i].ID
+		byID[posts[i].ID] = &posts[i]
+	}
+	rows, err := s.pool.Query(ctx, `SELECT i.scheduled_post_id, i.id, i.content_type, i.created_at,
+		COALESCE(p.title_image_id = i.id, false)
+		FROM post_images i JOIN scheduled_posts p ON p.id = i.scheduled_post_id
+		WHERE i.scheduled_post_id = ANY($1::bigint[]) ORDER BY i.id`, ids)
+	if err != nil {
+		return fmt.Errorf("db: load image metadata: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var postID int64
+		var title bool
+		var image scheduledposts.ImageMetadata
+		if err := rows.Scan(&postID, &image.ID, &image.ContentType, &image.CreatedAt, &title); err != nil {
+			return fmt.Errorf("db: scan image metadata: %w", err)
+		}
+		byID[postID].Images = append(byID[postID].Images, image)
+		if title {
+			byID[postID].TitleImage = &image
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("db: load image metadata: %w", err)
+	}
+	return nil
 }
 
 func (s scheduledPostStore) DeleteScheduledPost(ctx context.Context, id int64) error {

@@ -14,7 +14,7 @@ func TestMuxPingOverConnectJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	res := httptest.NewRecorder()
 
-	newMux(noEnv, nil).ServeHTTP(res, req)
+	newMux(noEnv, nil, nil).ServeHTTP(res, req)
 
 	if res.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d; body = %q", res.Code, http.StatusOK, res.Body.String())
@@ -52,7 +52,7 @@ func TestMuxPingPreflightHonorsCORSAllowedOrigin(t *testing.T) {
 			req.Header.Set("Access-Control-Request-Method", "POST")
 			res := httptest.NewRecorder()
 
-			newMux(tt.getenv, nil).ServeHTTP(res, req)
+			newMux(tt.getenv, nil, nil).ServeHTTP(res, req)
 
 			if res.Code != tt.want {
 				t.Fatalf("status = %d, want %d", res.Code, tt.want)

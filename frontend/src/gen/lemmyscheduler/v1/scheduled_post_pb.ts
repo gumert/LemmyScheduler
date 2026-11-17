@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file lemmyscheduler/v1/scheduled_post.proto.
  */
 export const file_lemmyscheduler_v1_scheduled_post: GenFile = /*@__PURE__*/
-  fileDesc("CiZsZW1teXNjaGVkdWxlci92MS9zY2hlZHVsZWRfcG9zdC5wcm90bxIRbGVtbXlzY2hlZHVsZXIudjEihgMKDVNjaGVkdWxlZFBvc3QSCgoCaWQYASABKAMSDQoFdGl0bGUYAiABKAkSDAoEYm9keRgDIAEoCRILCgN1cmwYBCABKAkSEQoJY29tbXVuaXR5GAUgASgJEgwKBG5zZncYBiABKAgSNgoGc3RhdHVzGAcgASgOMiYubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdFN0YXR1cxIwCgxzY2hlZHVsZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCXBvc3RlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFgoObGVtbXlfcG9zdF91cmwYCiABKAkSLgoKY3JlYXRlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBKBAgLEAxSB3ZlcnNpb24iyQEKElNjaGVkdWxlZFBvc3RJbnB1dBINCgV0aXRsZRgBIAEoCRIMCgRib2R5GAIgASgJEgsKA3VybBgDIAEoCRIRCgljb21tdW5pdHkYBCABKAkSDAoEbnNmdxgFIAEoCBI2CgZzdGF0dXMYBiABKA4yJi5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0U3RhdHVzEjAKDHNjaGVkdWxlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiWwoaQ3JlYXRlU2NoZWR1bGVkUG9zdFJlcXVlc3QSPQoOc2NoZWR1bGVkX3Bvc3QYASABKAsyJS5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0SW5wdXQiVwobQ3JlYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEjgKDnNjaGVkdWxlZF9wb3N0GAEgASgLMiAubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdCIlChdHZXRTY2hlZHVsZWRQb3N0UmVxdWVzdBIKCgJpZBgBIAEoAyJUChhHZXRTY2hlZHVsZWRQb3N0UmVzcG9uc2USOAoOc2NoZWR1bGVkX3Bvc3QYASABKAsyIC5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0IpABChlMaXN0U2NoZWR1bGVkUG9zdHNSZXF1ZXN0EjgKCHN0YXR1c2VzGAEgAygOMiYubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdFN0YXR1cxISCgpkZXNjZW5kaW5nGAIgASgIEhEKCXBhZ2Vfc2l6ZRgDIAEoBRISCgpwYWdlX3Rva2VuGAQgASgJInAKGkxpc3RTY2hlZHVsZWRQb3N0c1Jlc3BvbnNlEjkKD3NjaGVkdWxlZF9wb3N0cxgBIAMoCzIgLmxlbW15c2NoZWR1bGVyLnYxLlNjaGVkdWxlZFBvc3QSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJInYKGlVwZGF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0EgoKAmlkGAEgASgDEj0KDnNjaGVkdWxlZF9wb3N0GAMgASgLMiUubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdElucHV0SgQIAhADUgd2ZXJzaW9uIlcKG1VwZGF0ZVNjaGVkdWxlZFBvc3RSZXNwb25zZRI4Cg5zY2hlZHVsZWRfcG9zdBgBIAEoCzIgLmxlbW15c2NoZWR1bGVyLnYxLlNjaGVkdWxlZFBvc3QiKAoaRGVsZXRlU2NoZWR1bGVkUG9zdFJlcXVlc3QSCgoCaWQYASABKAMiHQobRGVsZXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlKrMCChNTY2hlZHVsZWRQb3N0U3RhdHVzEiUKIVNDSEVEVUxFRF9QT1NUX1NUQVRVU19VTlNQRUNJRklFRBAAEh8KG1NDSEVEVUxFRF9QT1NUX1NUQVRVU19EUkFGVBABEiMKH1NDSEVEVUxFRF9QT1NUX1NUQVRVU19TQ0hFRFVMRUQQAhIgChxTQ0hFRFVMRURfUE9TVF9TVEFUVVNfUEFVU0VEEAMSIQodU0NIRURVTEVEX1BPU1RfU1RBVFVTX1BPU1RJTkcQBBIgChxTQ0hFRFVMRURfUE9TVF9TVEFUVVNfUE9TVEVEEAUSJgoiU0NIRURVTEVEX1BPU1RfU1RBVFVTX05FRURTX1JFVklFVxAGEiAKHFNDSEVEVUxFRF9QT1NUX1NUQVRVU19GQUlMRUQQBzLYBAoUU2NoZWR1bGVkUG9zdFNlcnZpY2USdAoTQ3JlYXRlU2NoZWR1bGVkUG9zdBItLmxlbW15c2NoZWR1bGVyLnYxLkNyZWF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0Gi4ubGVtbXlzY2hlZHVsZXIudjEuQ3JlYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEmsKEEdldFNjaGVkdWxlZFBvc3QSKi5sZW1teXNjaGVkdWxlci52MS5HZXRTY2hlZHVsZWRQb3N0UmVxdWVzdBorLmxlbW15c2NoZWR1bGVyLnYxLkdldFNjaGVkdWxlZFBvc3RSZXNwb25zZRJxChJMaXN0U2NoZWR1bGVkUG9zdHMSLC5sZW1teXNjaGVkdWxlci52MS5MaXN0U2NoZWR1bGVkUG9zdHNSZXF1ZXN0Gi0ubGVtbXlzY2hlZHVsZXIudjEuTGlzdFNjaGVkdWxlZFBvc3RzUmVzcG9uc2USdAoTVXBkYXRlU2NoZWR1bGVkUG9zdBItLmxlbW15c2NoZWR1bGVyLnYxLlVwZGF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0Gi4ubGVtbXlzY2hlZHVsZXIudjEuVXBkYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEnQKE0RlbGV0ZVNjaGVkdWxlZFBvc3QSLS5sZW1teXNjaGVkdWxlci52MS5EZWxldGVTY2hlZHVsZWRQb3N0UmVxdWVzdBouLmxlbW15c2NoZWR1bGVyLnYxLkRlbGV0ZVNjaGVkdWxlZFBvc3RSZXNwb25zZULqAQoVY29tLmxlbW15c2NoZWR1bGVyLnYxQhJTY2hlZHVsZWRQb3N0UHJvdG9QAVpYZ2l0aHViLmNvbS9ndW1lcnQvTGVtbXlTY2hlZHVsZXIvYmFja2VuZC9pbnRlcm5hbC9nZW4vbGVtbXlzY2hlZHVsZXIvdjE7bGVtbXlzY2hlZHVsZXJ2MaICA0xYWKoCEUxlbW15c2NoZWR1bGVyLlYxygIRTGVtbXlzY2hlZHVsZXJcVjHiAh1MZW1teXNjaGVkdWxlclxWMVxHUEJNZXRhZGF0YeoCEkxlbW15c2NoZWR1bGVyOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("CiZsZW1teXNjaGVkdWxlci92MS9zY2hlZHVsZWRfcG9zdC5wcm90bxIRbGVtbXlzY2hlZHVsZXIudjEi5wMKDVNjaGVkdWxlZFBvc3QSCgoCaWQYASABKAMSDQoFdGl0bGUYAiABKAkSDAoEYm9keRgDIAEoCRILCgN1cmwYBCABKAkSEQoJY29tbXVuaXR5GAUgASgJEgwKBG5zZncYBiABKAgSNgoGc3RhdHVzGAcgASgOMiYubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdFN0YXR1cxIwCgxzY2hlZHVsZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCXBvc3RlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFgoObGVtbXlfcG9zdF91cmwYCiABKAkSLgoKY3JlYXRlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoLdGl0bGVfaW1hZ2UYDiABKAsyHC5sZW1teXNjaGVkdWxlci52MS5Qb3N0SW1hZ2USLAoGaW1hZ2VzGA8gAygLMhwubGVtbXlzY2hlZHVsZXIudjEuUG9zdEltYWdlSgQICxAMUgd2ZXJzaW9uIl0KCVBvc3RJbWFnZRIKCgJpZBgBIAEoAxIUCgxjb250ZW50X3R5cGUYAiABKAkSLgoKY3JlYXRlZF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiyQEKElNjaGVkdWxlZFBvc3RJbnB1dBINCgV0aXRsZRgBIAEoCRIMCgRib2R5GAIgASgJEgsKA3VybBgDIAEoCRIRCgljb21tdW5pdHkYBCABKAkSDAoEbnNmdxgFIAEoCBI2CgZzdGF0dXMYBiABKA4yJi5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0U3RhdHVzEjAKDHNjaGVkdWxlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiWwoaQ3JlYXRlU2NoZWR1bGVkUG9zdFJlcXVlc3QSPQoOc2NoZWR1bGVkX3Bvc3QYASABKAsyJS5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0SW5wdXQiVwobQ3JlYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEjgKDnNjaGVkdWxlZF9wb3N0GAEgASgLMiAubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdCIlChdHZXRTY2hlZHVsZWRQb3N0UmVxdWVzdBIKCgJpZBgBIAEoAyJUChhHZXRTY2hlZHVsZWRQb3N0UmVzcG9uc2USOAoOc2NoZWR1bGVkX3Bvc3QYASABKAsyIC5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0IpABChlMaXN0U2NoZWR1bGVkUG9zdHNSZXF1ZXN0EjgKCHN0YXR1c2VzGAEgAygOMiYubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdFN0YXR1cxISCgpkZXNjZW5kaW5nGAIgASgIEhEKCXBhZ2Vfc2l6ZRgDIAEoBRISCgpwYWdlX3Rva2VuGAQgASgJInAKGkxpc3RTY2hlZHVsZWRQb3N0c1Jlc3BvbnNlEjkKD3NjaGVkdWxlZF9wb3N0cxgBIAMoCzIgLmxlbW15c2NoZWR1bGVyLnYxLlNjaGVkdWxlZFBvc3QSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJInYKGlVwZGF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0EgoKAmlkGAEgASgDEj0KDnNjaGVkdWxlZF9wb3N0GAMgASgLMiUubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdElucHV0SgQIAhADUgd2ZXJzaW9uIlcKG1VwZGF0ZVNjaGVkdWxlZFBvc3RSZXNwb25zZRI4Cg5zY2hlZHVsZWRfcG9zdBgBIAEoCzIgLmxlbW15c2NoZWR1bGVyLnYxLlNjaGVkdWxlZFBvc3QiKAoaRGVsZXRlU2NoZWR1bGVkUG9zdFJlcXVlc3QSCgoCaWQYASABKAMiHQobRGVsZXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlKrMCChNTY2hlZHVsZWRQb3N0U3RhdHVzEiUKIVNDSEVEVUxFRF9QT1NUX1NUQVRVU19VTlNQRUNJRklFRBAAEh8KG1NDSEVEVUxFRF9QT1NUX1NUQVRVU19EUkFGVBABEiMKH1NDSEVEVUxFRF9QT1NUX1NUQVRVU19TQ0hFRFVMRUQQAhIgChxTQ0hFRFVMRURfUE9TVF9TVEFUVVNfUEFVU0VEEAMSIQodU0NIRURVTEVEX1BPU1RfU1RBVFVTX1BPU1RJTkcQBBIgChxTQ0hFRFVMRURfUE9TVF9TVEFUVVNfUE9TVEVEEAUSJgoiU0NIRURVTEVEX1BPU1RfU1RBVFVTX05FRURTX1JFVklFVxAGEiAKHFNDSEVEVUxFRF9QT1NUX1NUQVRVU19GQUlMRUQQBzLYBAoUU2NoZWR1bGVkUG9zdFNlcnZpY2USdAoTQ3JlYXRlU2NoZWR1bGVkUG9zdBItLmxlbW15c2NoZWR1bGVyLnYxLkNyZWF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0Gi4ubGVtbXlzY2hlZHVsZXIudjEuQ3JlYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEmsKEEdldFNjaGVkdWxlZFBvc3QSKi5sZW1teXNjaGVkdWxlci52MS5HZXRTY2hlZHVsZWRQb3N0UmVxdWVzdBorLmxlbW15c2NoZWR1bGVyLnYxLkdldFNjaGVkdWxlZFBvc3RSZXNwb25zZRJxChJMaXN0U2NoZWR1bGVkUG9zdHMSLC5sZW1teXNjaGVkdWxlci52MS5MaXN0U2NoZWR1bGVkUG9zdHNSZXF1ZXN0Gi0ubGVtbXlzY2hlZHVsZXIudjEuTGlzdFNjaGVkdWxlZFBvc3RzUmVzcG9uc2USdAoTVXBkYXRlU2NoZWR1bGVkUG9zdBItLmxlbW15c2NoZWR1bGVyLnYxLlVwZGF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0Gi4ubGVtbXlzY2hlZHVsZXIudjEuVXBkYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEnQKE0RlbGV0ZVNjaGVkdWxlZFBvc3QSLS5sZW1teXNjaGVkdWxlci52MS5EZWxldGVTY2hlZHVsZWRQb3N0UmVxdWVzdBouLmxlbW15c2NoZWR1bGVyLnYxLkRlbGV0ZVNjaGVkdWxlZFBvc3RSZXNwb25zZULqAQoVY29tLmxlbW15c2NoZWR1bGVyLnYxQhJTY2hlZHVsZWRQb3N0UHJvdG9QAVpYZ2l0aHViLmNvbS9ndW1lcnQvTGVtbXlTY2hlZHVsZXIvYmFja2VuZC9pbnRlcm5hbC9nZW4vbGVtbXlzY2hlZHVsZXIvdjE7bGVtbXlzY2hlZHVsZXJ2MaICA0xYWKoCEUxlbW15c2NoZWR1bGVyLlYxygIRTGVtbXlzY2hlZHVsZXJcVjHiAh1MZW1teXNjaGVkdWxlclxWMVxHUEJNZXRhZGF0YeoCEkxlbW15c2NoZWR1bGVyOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message lemmyscheduler.v1.ScheduledPost
@@ -77,6 +77,16 @@ export type ScheduledPost = Message<"lemmyscheduler.v1.ScheduledPost"> & {
    * @generated from field: google.protobuf.Timestamp updated_at = 13;
    */
   updatedAt?: Timestamp;
+
+  /**
+   * @generated from field: lemmyscheduler.v1.PostImage title_image = 14;
+   */
+  titleImage?: PostImage;
+
+  /**
+   * @generated from field: repeated lemmyscheduler.v1.PostImage images = 15;
+   */
+  images: PostImage[];
 };
 
 /**
@@ -85,6 +95,33 @@ export type ScheduledPost = Message<"lemmyscheduler.v1.ScheduledPost"> & {
  */
 export const ScheduledPostSchema: GenMessage<ScheduledPost> = /*@__PURE__*/
   messageDesc(file_lemmyscheduler_v1_scheduled_post, 0);
+
+/**
+ * @generated from message lemmyscheduler.v1.PostImage
+ */
+export type PostImage = Message<"lemmyscheduler.v1.PostImage"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: string content_type = 2;
+   */
+  contentType: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 3;
+   */
+  createdAt?: Timestamp;
+};
+
+/**
+ * Describes the message lemmyscheduler.v1.PostImage.
+ * Use `create(PostImageSchema)` to create a new message.
+ */
+export const PostImageSchema: GenMessage<PostImage> = /*@__PURE__*/
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 1);
 
 /**
  * @generated from message lemmyscheduler.v1.ScheduledPostInput
@@ -131,7 +168,7 @@ export type ScheduledPostInput = Message<"lemmyscheduler.v1.ScheduledPostInput">
  * Use `create(ScheduledPostInputSchema)` to create a new message.
  */
 export const ScheduledPostInputSchema: GenMessage<ScheduledPostInput> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 1);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 2);
 
 /**
  * @generated from message lemmyscheduler.v1.CreateScheduledPostRequest
@@ -148,7 +185,7 @@ export type CreateScheduledPostRequest = Message<"lemmyscheduler.v1.CreateSchedu
  * Use `create(CreateScheduledPostRequestSchema)` to create a new message.
  */
 export const CreateScheduledPostRequestSchema: GenMessage<CreateScheduledPostRequest> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 2);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 3);
 
 /**
  * @generated from message lemmyscheduler.v1.CreateScheduledPostResponse
@@ -165,7 +202,7 @@ export type CreateScheduledPostResponse = Message<"lemmyscheduler.v1.CreateSched
  * Use `create(CreateScheduledPostResponseSchema)` to create a new message.
  */
 export const CreateScheduledPostResponseSchema: GenMessage<CreateScheduledPostResponse> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 3);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 4);
 
 /**
  * @generated from message lemmyscheduler.v1.GetScheduledPostRequest
@@ -182,7 +219,7 @@ export type GetScheduledPostRequest = Message<"lemmyscheduler.v1.GetScheduledPos
  * Use `create(GetScheduledPostRequestSchema)` to create a new message.
  */
 export const GetScheduledPostRequestSchema: GenMessage<GetScheduledPostRequest> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 4);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 5);
 
 /**
  * @generated from message lemmyscheduler.v1.GetScheduledPostResponse
@@ -199,7 +236,7 @@ export type GetScheduledPostResponse = Message<"lemmyscheduler.v1.GetScheduledPo
  * Use `create(GetScheduledPostResponseSchema)` to create a new message.
  */
 export const GetScheduledPostResponseSchema: GenMessage<GetScheduledPostResponse> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 5);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 6);
 
 /**
  * @generated from message lemmyscheduler.v1.ListScheduledPostsRequest
@@ -231,7 +268,7 @@ export type ListScheduledPostsRequest = Message<"lemmyscheduler.v1.ListScheduled
  * Use `create(ListScheduledPostsRequestSchema)` to create a new message.
  */
 export const ListScheduledPostsRequestSchema: GenMessage<ListScheduledPostsRequest> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 6);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 7);
 
 /**
  * @generated from message lemmyscheduler.v1.ListScheduledPostsResponse
@@ -253,7 +290,7 @@ export type ListScheduledPostsResponse = Message<"lemmyscheduler.v1.ListSchedule
  * Use `create(ListScheduledPostsResponseSchema)` to create a new message.
  */
 export const ListScheduledPostsResponseSchema: GenMessage<ListScheduledPostsResponse> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 7);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 8);
 
 /**
  * @generated from message lemmyscheduler.v1.UpdateScheduledPostRequest
@@ -275,7 +312,7 @@ export type UpdateScheduledPostRequest = Message<"lemmyscheduler.v1.UpdateSchedu
  * Use `create(UpdateScheduledPostRequestSchema)` to create a new message.
  */
 export const UpdateScheduledPostRequestSchema: GenMessage<UpdateScheduledPostRequest> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 8);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 9);
 
 /**
  * @generated from message lemmyscheduler.v1.UpdateScheduledPostResponse
@@ -292,7 +329,7 @@ export type UpdateScheduledPostResponse = Message<"lemmyscheduler.v1.UpdateSched
  * Use `create(UpdateScheduledPostResponseSchema)` to create a new message.
  */
 export const UpdateScheduledPostResponseSchema: GenMessage<UpdateScheduledPostResponse> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 9);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 10);
 
 /**
  * @generated from message lemmyscheduler.v1.DeleteScheduledPostRequest
@@ -309,7 +346,7 @@ export type DeleteScheduledPostRequest = Message<"lemmyscheduler.v1.DeleteSchedu
  * Use `create(DeleteScheduledPostRequestSchema)` to create a new message.
  */
 export const DeleteScheduledPostRequestSchema: GenMessage<DeleteScheduledPostRequest> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 10);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 11);
 
 /**
  * @generated from message lemmyscheduler.v1.DeleteScheduledPostResponse
@@ -322,7 +359,7 @@ export type DeleteScheduledPostResponse = Message<"lemmyscheduler.v1.DeleteSched
  * Use `create(DeleteScheduledPostResponseSchema)` to create a new message.
  */
 export const DeleteScheduledPostResponseSchema: GenMessage<DeleteScheduledPostResponse> = /*@__PURE__*/
-  messageDesc(file_lemmyscheduler_v1_scheduled_post, 11);
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 12);
 
 /**
  * @generated from enum lemmyscheduler.v1.ScheduledPostStatus

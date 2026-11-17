@@ -71,6 +71,22 @@ set when `next build` runs; changing it afterwards has no effect.
 fallback is a Next `rewrites()` proxy: point the client base URL at `/api` so
 the browser only talks to the frontend's origin.
 
+## Scheduled-post images
+
+Images are stored locally in PostgreSQL, not uploaded to Lemmy. Each post can
+store up to 11 images, each at most 10 MiB, and reference up to 10 distinct
+images in its body. A title image may also be used in the body. JPEG, PNG, GIF
+and WebP are accepted based on their contents.
+
+- `PUT`, `GET`, `DELETE /scheduled-posts/{id}/title-image` replace, fetch or remove the title image.
+- `PUT /scheduled-posts/{id}/title-image/{image_id}` selects an existing image belonging to the post.
+- `POST /scheduled-posts/{id}/images` uploads an image; `GET` and `DELETE /scheduled-posts/{id}/images/{image_id}` fetch or remove it. Upload bodies are raw image bytes; successful uploads return JSON metadata with a string `id`.
+- Body images are referenced in the post body as `[[image:<image_id>]]`. Saving a post rejects tokens for images the post does not own, and deletes stored images that are no longer referenced (the selected title image is kept). Images can still be deleted explicitly, but not while referenced.
+- Removing or replacing a title image keeps its bytes if the body still references it. An image used as the title cannot be deleted through its image endpoint until it is no longer selected.
+- Deleting a scheduled post also deletes all of its locally stored images automatically.
+
+The post editor and Lemmy uploads are not implemented yet.
+
 ## Contributing
 
 - Keep pull requests small and focused.

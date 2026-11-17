@@ -283,7 +283,19 @@ func postToProto(post scheduledposts.ScheduledPost) *lemmyschedulerv1.ScheduledP
 	if post.PostedAt != nil {
 		result.PostedAt = timestamppb.New(*post.PostedAt)
 	}
+	if post.TitleImage != nil {
+		result.TitleImage = imageToProto(*post.TitleImage)
+	}
+	for _, image := range post.Images {
+		result.Images = append(result.Images, imageToProto(image))
+	}
 	return result
+}
+
+func imageToProto(image scheduledposts.ImageMetadata) *lemmyschedulerv1.PostImage {
+	return &lemmyschedulerv1.PostImage{
+		Id: image.ID, ContentType: image.ContentType, CreatedAt: timestamppb.New(image.CreatedAt),
+	}
 }
 
 func invalidArgument(message string) error {

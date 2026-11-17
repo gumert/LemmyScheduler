@@ -63,8 +63,8 @@ func TestCORSPreflightFromAllowedOrigin(t *testing.T) {
 	}
 	want := map[string]string{
 		"Access-Control-Allow-Origin":  "http://localhost:3000",
-		"Access-Control-Allow-Methods": "POST, OPTIONS",
-		"Access-Control-Allow-Headers": "Content-Type, Connect-Protocol-Version, Connect-Timeout-Ms",
+		"Access-Control-Allow-Methods": "GET, PUT, DELETE, POST, OPTIONS",
+		"Access-Control-Allow-Headers": "Content-Type, If-None-Match, Connect-Protocol-Version, Connect-Timeout-Ms",
 		"Access-Control-Max-Age":       "7200",
 	}
 	for name, value := range want {

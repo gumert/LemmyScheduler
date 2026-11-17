@@ -2,6 +2,7 @@ package scheduledposts
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -49,6 +50,25 @@ func TestValidateCreate(t *testing.T) {
 				t.Fatalf("ValidateCreate() error = %v, want validation error for %q", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestBodyImageLimit(t *testing.T) {
+	post := validPost()
+	for i := 1; i <= MaxBodyImages; i++ {
+		post.Body += fmt.Sprintf("text [[image:%d]] ", i)
+	}
+	post.Body += "[[image:1]]"
+	var validationErr *ValidationError
+	if err := ValidateCreate(post, time.Now()); !errors.As(err, &validationErr) || validationErr.Field != "body" {
+		t.Fatalf("create with image references: %v", err)
+	}
+	if err := ValidateUpdate(validPost(), post, time.Now()); err != nil {
+		t.Fatalf("ten distinct images with a repeated reference: %v", err)
+	}
+	post.Body += "[[image:11]]"
+	if err := ValidateUpdate(validPost(), post, time.Now()); !errors.As(err, &validationErr) || validationErr.Field != "body" {
+		t.Fatalf("updating to eleven distinct images: %v", err)
 	}
 }
 

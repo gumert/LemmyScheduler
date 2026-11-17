@@ -56,7 +56,7 @@ func TestScheduledPostStorePostgres(t *testing.T) {
 	}
 	defer pool.Close()
 
-	for _, name := range []string{"0001_initial.up.sql", "0002_scheduled_posts.up.sql"} {
+	for _, name := range []string{"0001_initial.up.sql", "0002_scheduled_posts.up.sql", "0003_post_images.up.sql"} {
 		migration, err := migrations.FS.ReadFile(name)
 		if err != nil {
 			t.Fatalf("read migration %s: %v", name, err)
@@ -141,4 +141,287 @@ func TestScheduledPostStorePostgres(t *testing.T) {
 			t.Errorf("%s constraint error = %v, want check-constraint violation", name, err)
 		}
 	}
+
+	t.Run("images", func(t *testing.T) {
+		images := NewImageStore(pool)
+		post, err := store.CreateScheduledPost(ctx, scheduledposts.ScheduledPost{
+			Title: "images", Community: "rust", Status: scheduledposts.StatusDraft,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := pool.Exec(ctx, `UPDATE scheduled_posts SET updated_at = '2000-01-01 UTC' WHERE id = $1`, post.ID); err != nil {
+			t.Fatal(err)
+		}
+		title, err := images.PutTitleImage(ctx, post.ID, "image/png", []byte("first"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		afterUpload, err := store.GetScheduledPost(ctx, post.ID)
+		if err != nil || afterUpload.UpdatedAt.Year() <= 2000 {
+			t.Fatalf("image upload did not update post timestamp: %+v, %v", afterUpload, err)
+		}
+		replacement, err := images.PutTitleImage(ctx, post.ID, "image/png", []byte("replacement"))
+		if err != nil || replacement.ID == title.ID {
+			t.Fatalf("replace title = %+v, %v", replacement, err)
+		}
+		got, err := images.GetImage(ctx, post.ID, 0, true)
+		if err != nil || string(got.Data) != "replacement" {
+			t.Fatalf("get title = %+v, %v", got, err)
+		}
+		one, err := images.CreateBodyImage(ctx, post.ID, "image/png", []byte("body"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		post.Body = fmt.Sprintf("before [[image:%d]] after", one.ID)
+		if _, err := store.UpdateScheduledPost(ctx, post); err != nil {
+			t.Fatal(err)
+		}
+		if err := images.DeleteImage(ctx, post.ID, one.ID, false); !errors.Is(err, scheduledposts.ErrImageInUse) {
+			t.Fatalf("delete referenced image = %v", err)
+		}
+		if _, err := images.GetImage(ctx, post.ID, one.ID, false); err != nil {
+			t.Fatalf("referenced image was deleted: %v", err)
+		}
+		post.Body = ""
+		if _, err := store.UpdateScheduledPost(ctx, post); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := images.GetImage(ctx, post.ID, one.ID, false); !errors.Is(err, scheduledposts.ErrImageNotFound) {
+			t.Fatalf("unreferenced image survived body edit: %v", err)
+		}
+		two, err := images.CreateBodyImage(ctx, post.ID, "image/png", []byte("two"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := pool.Exec(ctx, `UPDATE scheduled_posts SET updated_at = '2000-01-01 UTC' WHERE id = $1`, post.ID); err != nil {
+			t.Fatal(err)
+		}
+		if err := images.DeleteImage(ctx, post.ID, two.ID, false); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := pool.Exec(ctx, `INSERT INTO post_images (scheduled_post_id, content_type, size_bytes, data)
+			VALUES ($1, 'image/png', 1, 'oversize'::bytea)`, post.ID); err == nil {
+			t.Fatal("mismatched image size was accepted")
+		}
+		afterDelete, err := store.GetScheduledPost(ctx, post.ID)
+		if err != nil || afterDelete.UpdatedAt.Year() <= 2000 {
+			t.Fatalf("image delete did not update post timestamp: %+v, %v", afterDelete, err)
+		}
+		if _, err := images.GetImage(ctx, post.ID, two.ID, false); !errors.Is(err, scheduledposts.ErrImageNotFound) {
+			t.Fatalf("get deleted image = %v", err)
+		}
+		results := make(chan error, scheduledposts.MaxPostImages+1)
+		for i := 0; i < cap(results); i++ {
+			go func() {
+				_, err := images.CreateBodyImage(ctx, post.ID, "image/png", []byte("body"))
+				results <- err
+			}()
+		}
+		var successes, limits int
+		for i := 0; i < cap(results); i++ {
+			err := <-results
+			switch {
+			case err == nil:
+				successes++
+			case errors.Is(err, scheduledposts.ErrImageLimit):
+				limits++
+			default:
+				t.Fatalf("concurrent upload: %v", err)
+			}
+		}
+		if successes != scheduledposts.MaxPostImages-1 || limits != 2 {
+			t.Fatalf("concurrent uploads = %d successes, %d limits", successes, limits)
+		}
+		// Set directly: a body edit through the store would delete the unreferenced images.
+		if _, err := pool.Exec(ctx, `UPDATE scheduled_posts SET body = $2 WHERE id = $1`, post.ID, fmt.Sprintf("[[image:%d]]", replacement.ID)); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := images.PutTitleImage(ctx, post.ID, "image/png", []byte("new title")); !errors.Is(err, scheduledposts.ErrImageLimit) {
+			t.Fatalf("replace referenced title at image limit = %v", err)
+		}
+		unchanged, err := images.GetImage(ctx, post.ID, 0, true)
+		if err != nil || unchanged.ID != replacement.ID {
+			t.Fatalf("failed replacement lost title image: %+v, %v", unchanged, err)
+		}
+		loaded, err := store.GetScheduledPost(ctx, post.ID)
+		if err != nil || loaded.TitleImage == nil || loaded.TitleImage.ID != replacement.ID || len(loaded.Images) != scheduledposts.MaxPostImages {
+			t.Fatalf("get image metadata = %+v, %v", loaded, err)
+		}
+		list, err := store.ListScheduledPosts(ctx, scheduledposts.ListOptions{Limit: 20})
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, item := range list {
+			if item.ID == post.ID {
+				found = item.TitleImage != nil && len(item.Images) == scheduledposts.MaxPostImages
+			}
+		}
+		if !found {
+			t.Fatal("list missing image metadata")
+		}
+		if err := store.DeleteScheduledPost(ctx, post.ID); err != nil {
+			t.Fatal(err)
+		}
+		var count int
+		if err := pool.QueryRow(ctx, `SELECT count(*) FROM post_images WHERE scheduled_post_id = $1`, post.ID).Scan(&count); err != nil || count != 0 {
+			t.Fatalf("images remaining after post deletion = %d, %v", count, err)
+		}
+		if _, err := images.CreateBodyImage(ctx, post.ID, "image/png", []byte("body")); !errors.Is(err, scheduledposts.ErrNotFound) {
+			t.Fatalf("upload after post deletion = %v", err)
+		}
+		if _, err := images.PutTitleImage(ctx, draft.ID, "image/png", []byte("body")); !errors.Is(err, scheduledposts.ErrNotEditable) {
+			t.Fatalf("upload to posting post = %v", err)
+		}
+	})
+
+	t.Run("body edit reconciles images", func(t *testing.T) {
+		images := NewImageStore(pool)
+		post, err := store.CreateScheduledPost(ctx, scheduledposts.ScheduledPost{
+			Title: "reconcile", Community: "rust", Status: scheduledposts.StatusDraft,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		title, err := images.PutTitleImage(ctx, post.ID, "image/png", []byte("title"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		a, err := images.CreateBodyImage(ctx, post.ID, "image/png", []byte("a"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, err := images.CreateBodyImage(ctx, post.ID, "image/png", []byte("b"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		other, err := store.CreateScheduledPost(ctx, scheduledposts.ScheduledPost{
+			Title: "other", Community: "rust", Status: scheduledposts.StatusDraft,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		foreign, err := images.CreateBodyImage(ctx, other.ID, "image/png", []byte("foreign"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var validationErr *scheduledposts.ValidationError
+		for _, id := range []int64{foreign.ID, a.ID + 100000} {
+			post.Body = fmt.Sprintf("[[image:%d]] [[image:%d]]", a.ID, id)
+			if _, err := store.UpdateScheduledPost(ctx, post); !errors.As(err, &validationErr) || validationErr.Field != "body" {
+				t.Fatalf("body referencing image %d = %v", id, err)
+			}
+		}
+		if got, err := store.GetScheduledPost(ctx, post.ID); err != nil || len(got.Images) != 3 || got.Body != "" {
+			t.Fatalf("rejected update changed the post: %+v, %v", got, err)
+		}
+		post.Body = fmt.Sprintf("[[image:%d]] [[image:%d]]", a.ID, b.ID)
+		if updated, err := store.UpdateScheduledPost(ctx, post); err != nil || len(updated.Images) != 3 {
+			t.Fatalf("keep referenced images = %+v, %v", updated, err)
+		}
+		post.Body = fmt.Sprintf("[[image:%d]]", a.ID)
+		updated, err := store.UpdateScheduledPost(ctx, post)
+		if err != nil || len(updated.Images) != 2 || updated.TitleImage == nil || updated.TitleImage.ID != title.ID {
+			t.Fatalf("drop unreferenced image, keep title = %+v, %v", updated, err)
+		}
+		if _, err := images.GetImage(ctx, post.ID, b.ID, false); !errors.Is(err, scheduledposts.ErrImageNotFound) {
+			t.Fatalf("unreferenced image survived: %v", err)
+		}
+	})
+
+	t.Run("shared title image", func(t *testing.T) {
+		images := NewImageStore(pool)
+		post, err := store.CreateScheduledPost(ctx, scheduledposts.ScheduledPost{
+			Title: "shared", Community: "rust", Status: scheduledposts.StatusDraft,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		image, err := images.CreateBodyImage(ctx, post.ID, "image/png", []byte("shared"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := images.SelectTitleImage(ctx, post.ID, image.ID); err != nil {
+			t.Fatal(err)
+		}
+		if err := images.DeleteImage(ctx, post.ID, image.ID, false); !errors.Is(err, scheduledposts.ErrImageInUse) {
+			t.Fatalf("delete title image through image endpoint = %v", err)
+		}
+		post.Body = fmt.Sprintf("before [[image:%d]] after", image.ID)
+		if _, err := store.UpdateScheduledPost(ctx, post); err != nil {
+			t.Fatal(err)
+		}
+		if err := images.SelectTitleImage(ctx, post.ID, image.ID); err != nil {
+			t.Fatal(err)
+		}
+		if err := images.DeleteImage(ctx, post.ID, image.ID, false); !errors.Is(err, scheduledposts.ErrImageInUse) {
+			t.Fatalf("delete selected image = %v", err)
+		}
+		if err := images.DeleteImage(ctx, post.ID, 0, true); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := images.GetImage(ctx, post.ID, image.ID, false); err != nil {
+			t.Fatalf("clearing title deleted body image: %v", err)
+		}
+		if err := images.SelectTitleImage(ctx, post.ID, image.ID); err != nil {
+			t.Fatal(err)
+		}
+		replacement, err := images.PutTitleImage(ctx, post.ID, "image/png", []byte("replacement"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := images.GetImage(ctx, post.ID, image.ID, false); err != nil {
+			t.Fatalf("replacing title deleted body image: %v", err)
+		}
+		loaded, err := store.GetScheduledPost(ctx, post.ID)
+		if err != nil || loaded.TitleImage == nil || loaded.TitleImage.ID != replacement.ID || len(loaded.Images) != 2 {
+			t.Fatalf("shared image metadata = %+v, %v", loaded, err)
+		}
+		other, err := store.CreateScheduledPost(ctx, scheduledposts.ScheduledPost{
+			Title: "other", Community: "rust", Status: scheduledposts.StatusDraft,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := images.SelectTitleImage(ctx, other.ID, image.ID); !errors.Is(err, scheduledposts.ErrImageNotFound) {
+			t.Fatalf("select another post's image = %v", err)
+		}
+		_, err = pool.Exec(ctx, `UPDATE scheduled_posts SET title_image_id = $1 WHERE id = $2`, image.ID, other.ID)
+		var pgErr *pgconn.PgError
+		if !errors.As(err, &pgErr) || pgErr.Code != "23503" {
+			t.Fatalf("foreign title image constraint = %v", err)
+		}
+		if err := store.DeleteScheduledPost(ctx, post.ID); err != nil {
+			t.Fatalf("cascade deletion with title reference: %v", err)
+		}
+		var count int
+		if err := pool.QueryRow(ctx, `SELECT count(*) FROM post_images WHERE scheduled_post_id = $1`, post.ID).Scan(&count); err != nil || count != 0 {
+			t.Fatalf("images remaining after post deletion = %d, %v", count, err)
+		}
+	})
+
+	t.Run("image migration down", func(t *testing.T) {
+		post, err := store.CreateScheduledPost(ctx, scheduledposts.ScheduledPost{
+			Title: "down migration", Community: "rust", Status: scheduledposts.StatusDraft,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := NewImageStore(pool).PutTitleImage(ctx, post.ID, "image/png", []byte("image")); err != nil {
+			t.Fatal(err)
+		}
+		migration, err := migrations.FS.ReadFile("0003_post_images.down.sql")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := pool.Exec(ctx, string(migration)); err != nil {
+			t.Fatalf("apply image down migration: %v", err)
+		}
+		var exists bool
+		if err := pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM information_schema.columns
+			WHERE table_schema = current_schema() AND table_name = 'scheduled_posts' AND column_name = 'title_image_id')`).Scan(&exists); err != nil || exists {
+			t.Fatalf("title image column after down migration: exists=%t, err=%v", exists, err)
+		}
+	})
 }
