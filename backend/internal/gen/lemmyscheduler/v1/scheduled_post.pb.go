@@ -100,6 +100,8 @@ type ScheduledPost struct {
 	LemmyPostUrl  string                 `protobuf:"bytes,10,opt,name=lemmy_post_url,json=lemmyPostUrl,proto3" json:"lemmy_post_url,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	TitleImage    *PostImage             `protobuf:"bytes,14,opt,name=title_image,json=titleImage,proto3" json:"title_image,omitempty"`
+	Images        []*PostImage           `protobuf:"bytes,15,rep,name=images,proto3" json:"images,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -218,6 +220,80 @@ func (x *ScheduledPost) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *ScheduledPost) GetTitleImage() *PostImage {
+	if x != nil {
+		return x.TitleImage
+	}
+	return nil
+}
+
+func (x *ScheduledPost) GetImages() []*PostImage {
+	if x != nil {
+		return x.Images
+	}
+	return nil
+}
+
+type PostImage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PostImage) Reset() {
+	*x = PostImage{}
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PostImage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostImage) ProtoMessage() {}
+
+func (x *PostImage) ProtoReflect() protoreflect.Message {
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostImage.ProtoReflect.Descriptor instead.
+func (*PostImage) Descriptor() ([]byte, []int) {
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PostImage) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *PostImage) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+func (x *PostImage) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
 type ScheduledPostInput struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -233,7 +309,7 @@ type ScheduledPostInput struct {
 
 func (x *ScheduledPostInput) Reset() {
 	*x = ScheduledPostInput{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[1]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -245,7 +321,7 @@ func (x *ScheduledPostInput) String() string {
 func (*ScheduledPostInput) ProtoMessage() {}
 
 func (x *ScheduledPostInput) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[1]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -258,7 +334,7 @@ func (x *ScheduledPostInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScheduledPostInput.ProtoReflect.Descriptor instead.
 func (*ScheduledPostInput) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{1}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ScheduledPostInput) GetTitle() string {
@@ -319,7 +395,7 @@ type CreateScheduledPostRequest struct {
 
 func (x *CreateScheduledPostRequest) Reset() {
 	*x = CreateScheduledPostRequest{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[2]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -331,7 +407,7 @@ func (x *CreateScheduledPostRequest) String() string {
 func (*CreateScheduledPostRequest) ProtoMessage() {}
 
 func (x *CreateScheduledPostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[2]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -344,7 +420,7 @@ func (x *CreateScheduledPostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateScheduledPostRequest.ProtoReflect.Descriptor instead.
 func (*CreateScheduledPostRequest) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{2}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateScheduledPostRequest) GetScheduledPost() *ScheduledPostInput {
@@ -363,7 +439,7 @@ type CreateScheduledPostResponse struct {
 
 func (x *CreateScheduledPostResponse) Reset() {
 	*x = CreateScheduledPostResponse{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[3]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -375,7 +451,7 @@ func (x *CreateScheduledPostResponse) String() string {
 func (*CreateScheduledPostResponse) ProtoMessage() {}
 
 func (x *CreateScheduledPostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[3]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -388,7 +464,7 @@ func (x *CreateScheduledPostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateScheduledPostResponse.ProtoReflect.Descriptor instead.
 func (*CreateScheduledPostResponse) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{3}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateScheduledPostResponse) GetScheduledPost() *ScheduledPost {
@@ -407,7 +483,7 @@ type GetScheduledPostRequest struct {
 
 func (x *GetScheduledPostRequest) Reset() {
 	*x = GetScheduledPostRequest{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[4]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -419,7 +495,7 @@ func (x *GetScheduledPostRequest) String() string {
 func (*GetScheduledPostRequest) ProtoMessage() {}
 
 func (x *GetScheduledPostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[4]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -432,7 +508,7 @@ func (x *GetScheduledPostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetScheduledPostRequest.ProtoReflect.Descriptor instead.
 func (*GetScheduledPostRequest) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{4}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetScheduledPostRequest) GetId() int64 {
@@ -451,7 +527,7 @@ type GetScheduledPostResponse struct {
 
 func (x *GetScheduledPostResponse) Reset() {
 	*x = GetScheduledPostResponse{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[5]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -463,7 +539,7 @@ func (x *GetScheduledPostResponse) String() string {
 func (*GetScheduledPostResponse) ProtoMessage() {}
 
 func (x *GetScheduledPostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[5]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -476,7 +552,7 @@ func (x *GetScheduledPostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetScheduledPostResponse.ProtoReflect.Descriptor instead.
 func (*GetScheduledPostResponse) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{5}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetScheduledPostResponse) GetScheduledPost() *ScheduledPost {
@@ -498,7 +574,7 @@ type ListScheduledPostsRequest struct {
 
 func (x *ListScheduledPostsRequest) Reset() {
 	*x = ListScheduledPostsRequest{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[6]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -510,7 +586,7 @@ func (x *ListScheduledPostsRequest) String() string {
 func (*ListScheduledPostsRequest) ProtoMessage() {}
 
 func (x *ListScheduledPostsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[6]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -523,7 +599,7 @@ func (x *ListScheduledPostsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListScheduledPostsRequest.ProtoReflect.Descriptor instead.
 func (*ListScheduledPostsRequest) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{6}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListScheduledPostsRequest) GetStatuses() []ScheduledPostStatus {
@@ -564,7 +640,7 @@ type ListScheduledPostsResponse struct {
 
 func (x *ListScheduledPostsResponse) Reset() {
 	*x = ListScheduledPostsResponse{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[7]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -576,7 +652,7 @@ func (x *ListScheduledPostsResponse) String() string {
 func (*ListScheduledPostsResponse) ProtoMessage() {}
 
 func (x *ListScheduledPostsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[7]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -589,7 +665,7 @@ func (x *ListScheduledPostsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListScheduledPostsResponse.ProtoReflect.Descriptor instead.
 func (*ListScheduledPostsResponse) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{7}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ListScheduledPostsResponse) GetScheduledPosts() []*ScheduledPost {
@@ -616,7 +692,7 @@ type UpdateScheduledPostRequest struct {
 
 func (x *UpdateScheduledPostRequest) Reset() {
 	*x = UpdateScheduledPostRequest{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[8]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -628,7 +704,7 @@ func (x *UpdateScheduledPostRequest) String() string {
 func (*UpdateScheduledPostRequest) ProtoMessage() {}
 
 func (x *UpdateScheduledPostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[8]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -641,7 +717,7 @@ func (x *UpdateScheduledPostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateScheduledPostRequest.ProtoReflect.Descriptor instead.
 func (*UpdateScheduledPostRequest) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{8}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpdateScheduledPostRequest) GetId() int64 {
@@ -667,7 +743,7 @@ type UpdateScheduledPostResponse struct {
 
 func (x *UpdateScheduledPostResponse) Reset() {
 	*x = UpdateScheduledPostResponse{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[9]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -679,7 +755,7 @@ func (x *UpdateScheduledPostResponse) String() string {
 func (*UpdateScheduledPostResponse) ProtoMessage() {}
 
 func (x *UpdateScheduledPostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[9]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -692,7 +768,7 @@ func (x *UpdateScheduledPostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateScheduledPostResponse.ProtoReflect.Descriptor instead.
 func (*UpdateScheduledPostResponse) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{9}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateScheduledPostResponse) GetScheduledPost() *ScheduledPost {
@@ -711,7 +787,7 @@ type DeleteScheduledPostRequest struct {
 
 func (x *DeleteScheduledPostRequest) Reset() {
 	*x = DeleteScheduledPostRequest{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[10]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -723,7 +799,7 @@ func (x *DeleteScheduledPostRequest) String() string {
 func (*DeleteScheduledPostRequest) ProtoMessage() {}
 
 func (x *DeleteScheduledPostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[10]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -736,7 +812,7 @@ func (x *DeleteScheduledPostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteScheduledPostRequest.ProtoReflect.Descriptor instead.
 func (*DeleteScheduledPostRequest) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{10}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeleteScheduledPostRequest) GetId() int64 {
@@ -754,7 +830,7 @@ type DeleteScheduledPostResponse struct {
 
 func (x *DeleteScheduledPostResponse) Reset() {
 	*x = DeleteScheduledPostResponse{}
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[11]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -766,7 +842,7 @@ func (x *DeleteScheduledPostResponse) String() string {
 func (*DeleteScheduledPostResponse) ProtoMessage() {}
 
 func (x *DeleteScheduledPostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[11]
+	mi := &file_lemmyscheduler_v1_scheduled_post_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -779,14 +855,14 @@ func (x *DeleteScheduledPostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteScheduledPostResponse.ProtoReflect.Descriptor instead.
 func (*DeleteScheduledPostResponse) Descriptor() ([]byte, []int) {
-	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{11}
+	return file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP(), []int{12}
 }
 
 var File_lemmyscheduler_v1_scheduled_post_proto protoreflect.FileDescriptor
 
 const file_lemmyscheduler_v1_scheduled_post_proto_rawDesc = "" +
 	"\n" +
-	"&lemmyscheduler/v1/scheduled_post.proto\x12\x11lemmyscheduler.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf0\x03\n" +
+	"&lemmyscheduler/v1/scheduled_post.proto\x12\x11lemmyscheduler.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe5\x04\n" +
 	"\rScheduledPost\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
@@ -802,7 +878,15 @@ const file_lemmyscheduler_v1_scheduled_post_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtJ\x04\b\v\x10\fR\aversion\"\x81\x02\n" +
+	"updated_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12=\n" +
+	"\vtitle_image\x18\x0e \x01(\v2\x1c.lemmyscheduler.v1.PostImageR\n" +
+	"titleImage\x124\n" +
+	"\x06images\x18\x0f \x03(\v2\x1c.lemmyscheduler.v1.PostImageR\x06imagesJ\x04\b\v\x10\fR\aversion\"y\n" +
+	"\tPostImage\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12!\n" +
+	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\x129\n" +
+	"\n" +
+	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x81\x02\n" +
 	"\x12ScheduledPostInput\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
 	"\x04body\x18\x02 \x01(\tR\x04body\x12\x10\n" +
@@ -868,53 +952,57 @@ func file_lemmyscheduler_v1_scheduled_post_proto_rawDescGZIP() []byte {
 }
 
 var file_lemmyscheduler_v1_scheduled_post_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_lemmyscheduler_v1_scheduled_post_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_lemmyscheduler_v1_scheduled_post_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_lemmyscheduler_v1_scheduled_post_proto_goTypes = []any{
 	(ScheduledPostStatus)(0),            // 0: lemmyscheduler.v1.ScheduledPostStatus
 	(*ScheduledPost)(nil),               // 1: lemmyscheduler.v1.ScheduledPost
-	(*ScheduledPostInput)(nil),          // 2: lemmyscheduler.v1.ScheduledPostInput
-	(*CreateScheduledPostRequest)(nil),  // 3: lemmyscheduler.v1.CreateScheduledPostRequest
-	(*CreateScheduledPostResponse)(nil), // 4: lemmyscheduler.v1.CreateScheduledPostResponse
-	(*GetScheduledPostRequest)(nil),     // 5: lemmyscheduler.v1.GetScheduledPostRequest
-	(*GetScheduledPostResponse)(nil),    // 6: lemmyscheduler.v1.GetScheduledPostResponse
-	(*ListScheduledPostsRequest)(nil),   // 7: lemmyscheduler.v1.ListScheduledPostsRequest
-	(*ListScheduledPostsResponse)(nil),  // 8: lemmyscheduler.v1.ListScheduledPostsResponse
-	(*UpdateScheduledPostRequest)(nil),  // 9: lemmyscheduler.v1.UpdateScheduledPostRequest
-	(*UpdateScheduledPostResponse)(nil), // 10: lemmyscheduler.v1.UpdateScheduledPostResponse
-	(*DeleteScheduledPostRequest)(nil),  // 11: lemmyscheduler.v1.DeleteScheduledPostRequest
-	(*DeleteScheduledPostResponse)(nil), // 12: lemmyscheduler.v1.DeleteScheduledPostResponse
-	(*timestamppb.Timestamp)(nil),       // 13: google.protobuf.Timestamp
+	(*PostImage)(nil),                   // 2: lemmyscheduler.v1.PostImage
+	(*ScheduledPostInput)(nil),          // 3: lemmyscheduler.v1.ScheduledPostInput
+	(*CreateScheduledPostRequest)(nil),  // 4: lemmyscheduler.v1.CreateScheduledPostRequest
+	(*CreateScheduledPostResponse)(nil), // 5: lemmyscheduler.v1.CreateScheduledPostResponse
+	(*GetScheduledPostRequest)(nil),     // 6: lemmyscheduler.v1.GetScheduledPostRequest
+	(*GetScheduledPostResponse)(nil),    // 7: lemmyscheduler.v1.GetScheduledPostResponse
+	(*ListScheduledPostsRequest)(nil),   // 8: lemmyscheduler.v1.ListScheduledPostsRequest
+	(*ListScheduledPostsResponse)(nil),  // 9: lemmyscheduler.v1.ListScheduledPostsResponse
+	(*UpdateScheduledPostRequest)(nil),  // 10: lemmyscheduler.v1.UpdateScheduledPostRequest
+	(*UpdateScheduledPostResponse)(nil), // 11: lemmyscheduler.v1.UpdateScheduledPostResponse
+	(*DeleteScheduledPostRequest)(nil),  // 12: lemmyscheduler.v1.DeleteScheduledPostRequest
+	(*DeleteScheduledPostResponse)(nil), // 13: lemmyscheduler.v1.DeleteScheduledPostResponse
+	(*timestamppb.Timestamp)(nil),       // 14: google.protobuf.Timestamp
 }
 var file_lemmyscheduler_v1_scheduled_post_proto_depIdxs = []int32{
 	0,  // 0: lemmyscheduler.v1.ScheduledPost.status:type_name -> lemmyscheduler.v1.ScheduledPostStatus
-	13, // 1: lemmyscheduler.v1.ScheduledPost.scheduled_at:type_name -> google.protobuf.Timestamp
-	13, // 2: lemmyscheduler.v1.ScheduledPost.posted_at:type_name -> google.protobuf.Timestamp
-	13, // 3: lemmyscheduler.v1.ScheduledPost.created_at:type_name -> google.protobuf.Timestamp
-	13, // 4: lemmyscheduler.v1.ScheduledPost.updated_at:type_name -> google.protobuf.Timestamp
-	0,  // 5: lemmyscheduler.v1.ScheduledPostInput.status:type_name -> lemmyscheduler.v1.ScheduledPostStatus
-	13, // 6: lemmyscheduler.v1.ScheduledPostInput.scheduled_at:type_name -> google.protobuf.Timestamp
-	2,  // 7: lemmyscheduler.v1.CreateScheduledPostRequest.scheduled_post:type_name -> lemmyscheduler.v1.ScheduledPostInput
-	1,  // 8: lemmyscheduler.v1.CreateScheduledPostResponse.scheduled_post:type_name -> lemmyscheduler.v1.ScheduledPost
-	1,  // 9: lemmyscheduler.v1.GetScheduledPostResponse.scheduled_post:type_name -> lemmyscheduler.v1.ScheduledPost
-	0,  // 10: lemmyscheduler.v1.ListScheduledPostsRequest.statuses:type_name -> lemmyscheduler.v1.ScheduledPostStatus
-	1,  // 11: lemmyscheduler.v1.ListScheduledPostsResponse.scheduled_posts:type_name -> lemmyscheduler.v1.ScheduledPost
-	2,  // 12: lemmyscheduler.v1.UpdateScheduledPostRequest.scheduled_post:type_name -> lemmyscheduler.v1.ScheduledPostInput
-	1,  // 13: lemmyscheduler.v1.UpdateScheduledPostResponse.scheduled_post:type_name -> lemmyscheduler.v1.ScheduledPost
-	3,  // 14: lemmyscheduler.v1.ScheduledPostService.CreateScheduledPost:input_type -> lemmyscheduler.v1.CreateScheduledPostRequest
-	5,  // 15: lemmyscheduler.v1.ScheduledPostService.GetScheduledPost:input_type -> lemmyscheduler.v1.GetScheduledPostRequest
-	7,  // 16: lemmyscheduler.v1.ScheduledPostService.ListScheduledPosts:input_type -> lemmyscheduler.v1.ListScheduledPostsRequest
-	9,  // 17: lemmyscheduler.v1.ScheduledPostService.UpdateScheduledPost:input_type -> lemmyscheduler.v1.UpdateScheduledPostRequest
-	11, // 18: lemmyscheduler.v1.ScheduledPostService.DeleteScheduledPost:input_type -> lemmyscheduler.v1.DeleteScheduledPostRequest
-	4,  // 19: lemmyscheduler.v1.ScheduledPostService.CreateScheduledPost:output_type -> lemmyscheduler.v1.CreateScheduledPostResponse
-	6,  // 20: lemmyscheduler.v1.ScheduledPostService.GetScheduledPost:output_type -> lemmyscheduler.v1.GetScheduledPostResponse
-	8,  // 21: lemmyscheduler.v1.ScheduledPostService.ListScheduledPosts:output_type -> lemmyscheduler.v1.ListScheduledPostsResponse
-	10, // 22: lemmyscheduler.v1.ScheduledPostService.UpdateScheduledPost:output_type -> lemmyscheduler.v1.UpdateScheduledPostResponse
-	12, // 23: lemmyscheduler.v1.ScheduledPostService.DeleteScheduledPost:output_type -> lemmyscheduler.v1.DeleteScheduledPostResponse
-	19, // [19:24] is the sub-list for method output_type
-	14, // [14:19] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	14, // 1: lemmyscheduler.v1.ScheduledPost.scheduled_at:type_name -> google.protobuf.Timestamp
+	14, // 2: lemmyscheduler.v1.ScheduledPost.posted_at:type_name -> google.protobuf.Timestamp
+	14, // 3: lemmyscheduler.v1.ScheduledPost.created_at:type_name -> google.protobuf.Timestamp
+	14, // 4: lemmyscheduler.v1.ScheduledPost.updated_at:type_name -> google.protobuf.Timestamp
+	2,  // 5: lemmyscheduler.v1.ScheduledPost.title_image:type_name -> lemmyscheduler.v1.PostImage
+	2,  // 6: lemmyscheduler.v1.ScheduledPost.images:type_name -> lemmyscheduler.v1.PostImage
+	14, // 7: lemmyscheduler.v1.PostImage.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 8: lemmyscheduler.v1.ScheduledPostInput.status:type_name -> lemmyscheduler.v1.ScheduledPostStatus
+	14, // 9: lemmyscheduler.v1.ScheduledPostInput.scheduled_at:type_name -> google.protobuf.Timestamp
+	3,  // 10: lemmyscheduler.v1.CreateScheduledPostRequest.scheduled_post:type_name -> lemmyscheduler.v1.ScheduledPostInput
+	1,  // 11: lemmyscheduler.v1.CreateScheduledPostResponse.scheduled_post:type_name -> lemmyscheduler.v1.ScheduledPost
+	1,  // 12: lemmyscheduler.v1.GetScheduledPostResponse.scheduled_post:type_name -> lemmyscheduler.v1.ScheduledPost
+	0,  // 13: lemmyscheduler.v1.ListScheduledPostsRequest.statuses:type_name -> lemmyscheduler.v1.ScheduledPostStatus
+	1,  // 14: lemmyscheduler.v1.ListScheduledPostsResponse.scheduled_posts:type_name -> lemmyscheduler.v1.ScheduledPost
+	3,  // 15: lemmyscheduler.v1.UpdateScheduledPostRequest.scheduled_post:type_name -> lemmyscheduler.v1.ScheduledPostInput
+	1,  // 16: lemmyscheduler.v1.UpdateScheduledPostResponse.scheduled_post:type_name -> lemmyscheduler.v1.ScheduledPost
+	4,  // 17: lemmyscheduler.v1.ScheduledPostService.CreateScheduledPost:input_type -> lemmyscheduler.v1.CreateScheduledPostRequest
+	6,  // 18: lemmyscheduler.v1.ScheduledPostService.GetScheduledPost:input_type -> lemmyscheduler.v1.GetScheduledPostRequest
+	8,  // 19: lemmyscheduler.v1.ScheduledPostService.ListScheduledPosts:input_type -> lemmyscheduler.v1.ListScheduledPostsRequest
+	10, // 20: lemmyscheduler.v1.ScheduledPostService.UpdateScheduledPost:input_type -> lemmyscheduler.v1.UpdateScheduledPostRequest
+	12, // 21: lemmyscheduler.v1.ScheduledPostService.DeleteScheduledPost:input_type -> lemmyscheduler.v1.DeleteScheduledPostRequest
+	5,  // 22: lemmyscheduler.v1.ScheduledPostService.CreateScheduledPost:output_type -> lemmyscheduler.v1.CreateScheduledPostResponse
+	7,  // 23: lemmyscheduler.v1.ScheduledPostService.GetScheduledPost:output_type -> lemmyscheduler.v1.GetScheduledPostResponse
+	9,  // 24: lemmyscheduler.v1.ScheduledPostService.ListScheduledPosts:output_type -> lemmyscheduler.v1.ListScheduledPostsResponse
+	11, // 25: lemmyscheduler.v1.ScheduledPostService.UpdateScheduledPost:output_type -> lemmyscheduler.v1.UpdateScheduledPostResponse
+	13, // 26: lemmyscheduler.v1.ScheduledPostService.DeleteScheduledPost:output_type -> lemmyscheduler.v1.DeleteScheduledPostResponse
+	22, // [22:27] is the sub-list for method output_type
+	17, // [17:22] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_lemmyscheduler_v1_scheduled_post_proto_init() }
@@ -928,7 +1016,7 @@ func file_lemmyscheduler_v1_scheduled_post_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_lemmyscheduler_v1_scheduled_post_proto_rawDesc), len(file_lemmyscheduler_v1_scheduled_post_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   12,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

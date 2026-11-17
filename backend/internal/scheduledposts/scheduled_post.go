@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -56,6 +58,8 @@ type ScheduledPost struct {
 	LemmyPostURL string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	TitleImage   *ImageMetadata
+	Images       []ImageMetadata
 }
 
 type Cursor struct {
@@ -114,6 +118,9 @@ func ValidateCreate(post ScheduledPost, now time.Time) error {
 	if err := validateFields(post); err != nil {
 		return err
 	}
+	if len(BodyImageIDs(post.Body)) > 0 {
+		return invalid("body", "cannot reference images before the post exists")
+	}
 	if post.Status == StatusScheduled && !isFuture(post.ScheduledAt, now) {
 		return invalid("scheduled_at", "must be in the future when status is scheduled")
 	}
@@ -159,6 +166,9 @@ func validateFields(post ScheduledPost) error {
 	if utf8.RuneCountInString(post.Body) > MaxBodyLength {
 		return invalid("body", fmt.Sprintf("must be at most %d characters", MaxBodyLength))
 	}
+	if len(BodyImageIDs(post.Body)) > MaxBodyImages {
+		return invalid("body", fmt.Sprintf("must reference at most %d distinct images", MaxBodyImages))
+	}
 	if post.URL != "" {
 		u, err := url.Parse(post.URL)
 		if err != nil || (!strings.EqualFold(u.Scheme, "http") && !strings.EqualFold(u.Scheme, "https")) || u.Host == "" || u.Opaque != "" {
@@ -176,6 +186,27 @@ func validateFields(post ScheduledPost) error {
 		return invalid("scheduled_at", "is required for scheduled or paused posts")
 	}
 	return nil
+}
+
+// The digit limit keeps every match within int64.
+var bodyImagePattern = regexp.MustCompile(`\[\[image:([1-9][0-9]{0,17})\]\]`)
+
+// BodyImageIDs returns the distinct image IDs referenced by [[image:<id>]]
+// tokens in body, in order of first appearance.
+func BodyImageIDs(body string) []int64 {
+	var ids []int64
+	seen := make(map[int64]struct{})
+	for _, match := range bodyImagePattern.FindAllStringSubmatch(body, -1) {
+		id, err := strconv.ParseInt(match[1], 10, 64)
+		if err != nil {
+			continue
+		}
+		if _, ok := seen[id]; !ok {
+			seen[id] = struct{}{}
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }
 
 func invalid(field, message string) error {

@@ -33,6 +33,7 @@ func (s fakeStore) Close() {
 }
 
 func (fakeStore) ScheduledPosts() scheduledposts.Store { return nil }
+func (fakeStore) Images() scheduledposts.ImageStore    { return nil }
 
 // fakeDeps records the order of calls and the URLs they received. run calls
 // every method on its own goroutine, so tests read the fields only after run

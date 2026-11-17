@@ -30,6 +30,14 @@ message ScheduledPost {
   reserved "version";
   google.protobuf.Timestamp created_at = 12;
   google.protobuf.Timestamp updated_at = 13;
+  PostImage title_image = 14;
+  repeated PostImage images = 15;
+}
+
+message PostImage {
+  int64 id = 1;
+  string content_type = 2;
+  google.protobuf.Timestamp created_at = 3;
 }
 
 message ScheduledPostInput {

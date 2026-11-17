@@ -39,8 +39,8 @@ func CORS(allowedOrigin string, next http.Handler) http.Handler {
 				return
 			}
 			h.Set("Access-Control-Allow-Origin", origin)
-			h.Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			h.Set("Access-Control-Allow-Headers", "Content-Type, Connect-Protocol-Version, Connect-Timeout-Ms")
+			h.Set("Access-Control-Allow-Methods", "GET, PUT, DELETE, POST, OPTIONS")
+			h.Set("Access-Control-Allow-Headers", "Content-Type, If-None-Match, Connect-Protocol-Version, Connect-Timeout-Ms")
 			h.Set("Access-Control-Max-Age", "7200")
 			w.WriteHeader(http.StatusNoContent)
 			return
