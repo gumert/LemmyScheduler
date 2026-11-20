@@ -17,8 +17,8 @@ repos:
       - id: check-merge-conflict
   - repo: local
     hooks:
-      - id: go-format
-        name: Go formatting
+      - id: format
+        name: Formatting (gofmt, Prettier)
         entry: just format-check
         language: system
         pass_filenames: false

@@ -7,10 +7,7 @@ import { pingClient } from "../src/api/client";
 // Keeps the page from hanging when the backend is down or unreachable.
 const PING_TIMEOUT_MS = 5000;
 
-type PingState =
-  | { status: "loading" }
-  | { status: "ok"; message: string }
-  | { status: "error"; error: string };
+type PingState = { status: "loading" } | { status: "ok"; message: string } | { status: "error"; error: string };
 
 export function PingStatus() {
   const [state, setState] = useState<PingState>({ status: "loading" });
@@ -40,8 +37,6 @@ export function PingStatus() {
     case "ok":
       return <p>Backend says: {state.message}</p>;
     case "error":
-      return (
-        <p role="alert">Backend unreachable: {state.error}</p>
-      );
+      return <p role="alert">Backend unreachable: {state.error}</p>;
   }
 }
