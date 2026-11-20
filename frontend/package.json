@@ -5,8 +5,11 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "eslint .",
     "start": "next start",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit --incremental false"
   },
   "dependencies": {
@@ -23,6 +26,8 @@
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.5",
-    "typescript": "5.9.3"
+    "prettier": "3.10.1",
+    "typescript": "5.9.3",
+    "vitest": "5.1.0"
   }
 }

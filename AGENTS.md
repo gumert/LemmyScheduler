@@ -60,6 +60,17 @@ The API is declared in protobuf under `proto/` and served with Connect-RPC. Gene
 - Put database-touching code behind small injected seams and test it with hand-written fakes. Fakes cannot validate SQL, so queries whose correctness matters (for example claiming a post for publishing) may also have tests that run against a real Postgres. Gate those on `TEST_DATABASE_URL` so `just check` still works without a database. `just tilt-check` also exercises real migrations and needs ports 8080, 3000 and 5433 free; it uses a throwaway Postgres directory.
 - Paginate large lists with keyset pagination (a sort key plus `id`, opaque page token), not offset, so lists stay fast as history grows.
 
+## Frontend conventions
+
+- Keep the UI clean and minimal: plain CSS in `frontend/app/globals.css`, no UI kit or CSS framework, and no decoration that doesn't help the task.
+- Validate input on change, not only on save. Show a specific inline message next to the field and disable the actions that need valid input. Mirror backend rules in a pure helper, but treat the server's response as authoritative and show its messages inline too.
+- Make mutually exclusive inputs mutually exclusive in the UI: lock the other input and say why. A Lemmy post shares a URL or a title image, not both.
+- Show distinct loading, empty and error states, and put a timeout on every API call.
+- Put logic in pure helpers under `frontend/src/` and test them with Vitest (`just frontend-test`). Components are thin and are not unit tested.
+- `frontend/src/api/client.ts` is the only module that builds API URLs.
+- Show times in the user's local zone with the zone name; send UTC to the API.
+- Next.js generates `frontend/AGENTS.md` when the dev server runs. It is disabled with `agentRules: false` in `next.config.ts`; this file is the single source of agent guidance.
+
 ## Validation
 
 From the repository root:

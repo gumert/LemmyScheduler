@@ -6,7 +6,7 @@ set shell := ["bash", "-cu"]
 export POSTGRES_DATA_DIR := env('POSTGRES_DATA_DIR', 'target/postgres')
 export POSTGRES_PORT := env('POSTGRES_PORT', '5433')
 
-check: proto-lint generate-check format-check vet test build lint typecheck frontend-build tilt-check
+check: proto-lint generate-check format-check vet test build lint typecheck frontend-test frontend-build tilt-check
 
 # Regenerate the committed Go and TypeScript API code from proto/.
 generate:
@@ -92,11 +92,13 @@ db-create: db-guard
         psql_admin -c "CREATE DATABASE lemmyscheduler"
     fi
 
-format:
+format: frontend-install
     gofmt -w backend
+    pnpm --dir frontend format
 
-format-check:
+format-check: frontend-install
     unformatted="$(gofmt -l backend)"; test -z "$unformatted" || { echo "gofmt needed (run 'just format'):"; echo "$unformatted"; exit 1; }
+    pnpm --dir frontend format:check
 
 vet:
     go -C backend vet ./...
@@ -125,6 +127,9 @@ lint: frontend-install
 
 typecheck: frontend-install
     pnpm --dir frontend typecheck
+
+frontend-test: frontend-install
+    pnpm --dir frontend test
 
 frontend-build: frontend-install
     pnpm --dir frontend build

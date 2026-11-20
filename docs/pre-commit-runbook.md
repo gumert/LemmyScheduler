@@ -34,7 +34,9 @@ On every `git commit`, the hooks in
 - `end-of-file-fixer`, `trailing-whitespace`, `check-merge-conflict`, and
   `detect-private-key` catch common hygiene mistakes and leaked secrets.
 - `just format-check` fails if any Go file under `backend` is not
-  `gofmt`-formatted. `just format` fixes it.
+  `gofmt`-formatted or any frontend file is not Prettier-formatted
+  (`frontend/.prettierrc.json`; generated code is ignored). `just format` fixes
+  both.
 - `just vet` runs `go vet` on the Go backend.
 - `just test` runs the Go backend tests.
 - `just build` compiles the Go backend, catching build breaks before
