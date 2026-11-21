@@ -80,6 +80,11 @@ type Store interface {
 	ListScheduledPosts(context.Context, ListOptions) ([]ScheduledPost, error)
 	UpdateScheduledPost(context.Context, ScheduledPost) (ScheduledPost, error)
 	DeleteScheduledPost(context.Context, int64) error
+	// BulkUpdate applies the action to every eligible post in one transaction
+	// and reports the rest as skipped. Eligibility (see BulkEligibleStatuses and
+	// BulkResultingTime) is re-checked inside the write so concurrent changes,
+	// such as the scheduler claiming a post, are skipped rather than modified.
+	BulkUpdate(context.Context, BulkRequest) (BulkResult, error)
 }
 
 func CanEdit(status Status) bool {

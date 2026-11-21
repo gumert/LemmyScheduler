@@ -95,10 +95,45 @@ message DeleteScheduledPostRequest {
 
 message DeleteScheduledPostResponse {}
 
+enum BulkAction {
+  BULK_ACTION_UNSPECIFIED = 0;
+  BULK_ACTION_DELETE = 1;
+  BULK_ACTION_PAUSE = 2;
+  BULK_ACTION_RESUME = 3;
+  BULK_ACTION_DELAY = 4;
+}
+
+enum BulkSkipReason {
+  BULK_SKIP_REASON_UNSPECIFIED = 0;
+  BULK_SKIP_REASON_NOT_FOUND = 1;
+  BULK_SKIP_REASON_WRONG_STATUS = 2;
+  BULK_SKIP_REASON_OVERDUE = 3;
+}
+
+message BulkUpdateScheduledPostsRequest {
+  // 1 to 200 ids.
+  repeated int64 ids = 1;
+  BulkAction action = 2;
+  // Required and positive (at most 365 days) for DELAY; must be 0 otherwise.
+  int64 delay_seconds = 3;
+}
+
+message BulkSkippedPost {
+  int64 id = 1;
+  BulkSkipReason reason = 2;
+  string message = 3;
+}
+
+message BulkUpdateScheduledPostsResponse {
+  repeated int64 updated_ids = 1;
+  repeated BulkSkippedPost skipped = 2;
+}
+
 service ScheduledPostService {
   rpc CreateScheduledPost(CreateScheduledPostRequest) returns (CreateScheduledPostResponse);
   rpc GetScheduledPost(GetScheduledPostRequest) returns (GetScheduledPostResponse);
   rpc ListScheduledPosts(ListScheduledPostsRequest) returns (ListScheduledPostsResponse);
   rpc UpdateScheduledPost(UpdateScheduledPostRequest) returns (UpdateScheduledPostResponse);
   rpc DeleteScheduledPost(DeleteScheduledPostRequest) returns (DeleteScheduledPostResponse);
+  rpc BulkUpdateScheduledPosts(BulkUpdateScheduledPostsRequest) returns (BulkUpdateScheduledPostsResponse);
 }

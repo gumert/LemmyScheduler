@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -399,6 +400,144 @@ func TestScheduledPostStorePostgres(t *testing.T) {
 		if err := pool.QueryRow(ctx, `SELECT count(*) FROM post_images WHERE scheduled_post_id = $1`, post.ID).Scan(&count); err != nil || count != 0 {
 			t.Fatalf("images remaining after post deletion = %d, %v", count, err)
 		}
+	})
+
+	t.Run("bulk update", func(t *testing.T) {
+		create := func(status scheduledposts.Status, at *time.Time) int64 {
+			t.Helper()
+			post, err := store.CreateScheduledPost(ctx, scheduledposts.ScheduledPost{
+				Title: "bulk", Community: "rust", Status: scheduledposts.StatusDraft,
+			})
+			if err != nil {
+				t.Fatalf("create bulk post: %v", err)
+			}
+			if _, err := pool.Exec(ctx, `UPDATE scheduled_posts SET status = $2, scheduled_at = $3 WHERE id = $1`,
+				post.ID, string(status), at); err != nil {
+				t.Fatalf("set bulk post state: %v", err)
+			}
+			return post.ID
+		}
+		state := func(id int64) (string, *time.Time, bool) {
+			t.Helper()
+			var status string
+			var at *time.Time
+			err := pool.QueryRow(ctx, `SELECT status, scheduled_at FROM scheduled_posts WHERE id = $1`, id).Scan(&status, &at)
+			if errors.Is(err, pgx.ErrNoRows) {
+				return "", nil, false
+			}
+			if err != nil {
+				t.Fatalf("read bulk post: %v", err)
+			}
+			return status, at, true
+		}
+		skipReasons := func(result scheduledposts.BulkResult) map[int64]scheduledposts.SkipReason {
+			reasons := make(map[int64]scheduledposts.SkipReason)
+			for _, skip := range result.Skipped {
+				reasons[skip.ID] = skip.Reason
+			}
+			return reasons
+		}
+		soon := time.Now().UTC().Add(time.Hour).Truncate(time.Microsecond)
+		later := soon.Add(3 * time.Hour)
+		past := time.Now().UTC().Add(-time.Hour).Truncate(time.Microsecond)
+		const missing = int64(987654321)
+
+		t.Run("mixed eligibility", func(t *testing.T) {
+			scheduledID := create(scheduledposts.StatusScheduled, &soon)
+			draftID := create(scheduledposts.StatusDraft, nil)
+			pausedID := create(scheduledposts.StatusPaused, &soon)
+			result, err := store.BulkUpdate(ctx, scheduledposts.BulkRequest{
+				IDs: []int64{scheduledID, draftID, pausedID, missing}, Action: scheduledposts.BulkPause,
+			})
+			if err != nil {
+				t.Fatalf("bulk pause: %v", err)
+			}
+			if len(result.UpdatedIDs) != 1 || result.UpdatedIDs[0] != scheduledID {
+				t.Fatalf("updated = %v, want [%d]", result.UpdatedIDs, scheduledID)
+			}
+			reasons := skipReasons(result)
+			if len(reasons) != 3 || reasons[draftID] != scheduledposts.SkipWrongStatus ||
+				reasons[pausedID] != scheduledposts.SkipWrongStatus || reasons[missing] != scheduledposts.SkipNotFound {
+				t.Fatalf("skipped = %+v", result.Skipped)
+			}
+			if status, at, _ := state(scheduledID); status != "paused" || !at.Equal(soon) {
+				t.Fatalf("paused post = %s %v", status, at)
+			}
+		})
+
+		t.Run("resume skips overdue", func(t *testing.T) {
+			okID := create(scheduledposts.StatusPaused, &soon)
+			overdueID := create(scheduledposts.StatusPaused, &past)
+			result, err := store.BulkUpdate(ctx, scheduledposts.BulkRequest{
+				IDs: []int64{okID, overdueID}, Action: scheduledposts.BulkResume,
+			})
+			if err != nil {
+				t.Fatalf("bulk resume: %v", err)
+			}
+			if len(result.UpdatedIDs) != 1 || result.UpdatedIDs[0] != okID || skipReasons(result)[overdueID] != scheduledposts.SkipOverdue {
+				t.Fatalf("result = %+v", result)
+			}
+			if status, _, _ := state(overdueID); status != "paused" {
+				t.Fatalf("overdue status = %s, want paused", status)
+			}
+		})
+
+		t.Run("delay preserves spacing", func(t *testing.T) {
+			a := create(scheduledposts.StatusScheduled, &soon)
+			b := create(scheduledposts.StatusPaused, &later)
+			overdue := create(scheduledposts.StatusScheduled, &past)
+			result, err := store.BulkUpdate(ctx, scheduledposts.BulkRequest{
+				IDs: []int64{a, b, overdue}, Action: scheduledposts.BulkDelay, Delay: 30 * time.Minute,
+			})
+			if err != nil {
+				t.Fatalf("bulk delay: %v", err)
+			}
+			if len(result.UpdatedIDs) != 2 || skipReasons(result)[overdue] != scheduledposts.SkipOverdue {
+				t.Fatalf("result = %+v", result)
+			}
+			statusA, atA, _ := state(a)
+			statusB, atB, _ := state(b)
+			if statusA != "scheduled" || statusB != "paused" || !atA.Equal(soon.Add(30*time.Minute)) || !atB.Equal(later.Add(30*time.Minute)) {
+				t.Fatalf("delayed = %s %v, %s %v", statusA, atA, statusB, atB)
+			}
+		})
+
+		t.Run("delete", func(t *testing.T) {
+			draftID := create(scheduledposts.StatusDraft, nil)
+			postedID := create(scheduledposts.StatusPosted, nil)
+			result, err := store.BulkUpdate(ctx, scheduledposts.BulkRequest{
+				IDs: []int64{draftID, postedID, missing}, Action: scheduledposts.BulkDelete,
+			})
+			if err != nil {
+				t.Fatalf("bulk delete: %v", err)
+			}
+			if len(result.UpdatedIDs) != 2 || skipReasons(result)[missing] != scheduledposts.SkipNotFound {
+				t.Fatalf("result = %+v", result)
+			}
+			if _, _, ok := state(draftID); ok {
+				t.Fatal("draft still exists")
+			}
+		})
+
+		t.Run("posting rows are untouched", func(t *testing.T) {
+			for _, request := range []scheduledposts.BulkRequest{
+				{Action: scheduledposts.BulkDelete}, {Action: scheduledposts.BulkPause},
+				{Action: scheduledposts.BulkResume}, {Action: scheduledposts.BulkDelay, Delay: time.Hour},
+			} {
+				id := create(scheduledposts.StatusPosting, &soon)
+				request.IDs = []int64{id}
+				result, err := store.BulkUpdate(ctx, request)
+				if err != nil {
+					t.Fatalf("bulk %s: %v", request.Action, err)
+				}
+				if len(result.UpdatedIDs) != 0 || skipReasons(result)[id] != scheduledposts.SkipWrongStatus {
+					t.Fatalf("bulk %s result = %+v", request.Action, result)
+				}
+				if status, at, ok := state(id); !ok || status != "posting" || !at.Equal(soon) {
+					t.Fatalf("bulk %s changed posting row: %s %v %v", request.Action, status, at, ok)
+				}
+			}
+		})
 	})
 
 	t.Run("image migration down", func(t *testing.T) {

@@ -5,6 +5,10 @@ import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { bodyImageIds, orphanedImageIds, insertImageToken, removeImageToken, splitBody } from "./body-images";
 import { describeApiError, describeImageStatus, fieldErrorFor } from "./errors";
 import { checkBodyImageCount, checkImageFile, MAX_IMAGE_BYTES } from "./images";
+import { create } from "@bufbuild/protobuf";
+
+import { customDelaySeconds, EMPTY_SELECTION, groupSkips, selectionReducer, summarizeBulk } from "./bulk";
+import { BulkSkippedPostSchema, BulkSkipReason } from "./gen/lemmyscheduler/v1/scheduled_post_pb";
 import { bodySnippet } from "./snippet";
 import { urlProblem } from "./url";
 import { defaultScheduledLocal, formatScheduledAt, localInputToTimestamp, timestampToLocalInput } from "./time";
@@ -148,5 +152,67 @@ describe("orphanedImageIds", () => {
     const images = [{ id: BigInt(1) }, { id: BigInt(2) }, { id: BigInt(3) }];
     expect(orphanedImageIds("a [[image:1]]", images, BigInt(3))).toEqual([BigInt(2)]);
     expect(orphanedImageIds("[[image:1]][[image:2]]", images, undefined)).toEqual([BigInt(3)]);
+  });
+});
+
+describe("bulk selection", () => {
+  it("toggles, selects a page, retains and clears", () => {
+    let state = selectionReducer(EMPTY_SELECTION, { type: "toggle", id: BigInt(1) });
+    state = selectionReducer(state, { type: "setAll", ids: [BigInt(1), BigInt(2), BigInt(3)], selected: true });
+    expect([...state]).toEqual([BigInt(1), BigInt(2), BigInt(3)]);
+    state = selectionReducer(state, { type: "toggle", id: BigInt(2) });
+    expect([...state]).toEqual([BigInt(1), BigInt(3)]);
+    state = selectionReducer(state, { type: "retain", ids: [BigInt(3), BigInt(4)] });
+    expect([...state]).toEqual([BigInt(3)]);
+    expect(selectionReducer(state, { type: "retain", ids: [BigInt(3)] })).toBe(state);
+    expect(selectionReducer(state, { type: "clear" }).size).toBe(0);
+  });
+
+  it("deselects only the given ids", () => {
+    const state = selectionReducer(new Set([BigInt(1), BigInt(2), BigInt(9)]), {
+      type: "setAll",
+      ids: [BigInt(1), BigInt(2)],
+      selected: false,
+    });
+    expect([...state]).toEqual([BigInt(9)]);
+  });
+});
+
+describe("bulk delay", () => {
+  it("converts custom amounts to seconds", () => {
+    expect(customDelaySeconds("36", "hours")).toBe(129_600);
+    expect(customDelaySeconds("2", "days")).toBe(172_800);
+  });
+
+  it("rejects empty, zero, fractional, negative and oversized amounts", () => {
+    for (const amount of ["", "0", "1.5", "-1", "abc", "366"]) {
+      expect(customDelaySeconds(amount, "days")).toBeUndefined();
+    }
+    expect(customDelaySeconds("365", "days")).toBe(365 * 86_400);
+    expect(customDelaySeconds("8761", "hours")).toBeUndefined();
+  });
+});
+
+describe("bulk results", () => {
+  it("groups skips by reason with titles", () => {
+    const skip = (id: bigint, reason: BulkSkipReason) => create(BulkSkippedPostSchema, { id, reason });
+    const groups = groupSkips(
+      [
+        skip(BigInt(1), BulkSkipReason.OVERDUE),
+        skip(BigInt(2), BulkSkipReason.WRONG_STATUS),
+        skip(BigInt(3), BulkSkipReason.OVERDUE),
+      ],
+      new Map([
+        [BigInt(1), "One"],
+        [BigInt(3), "Three"],
+      ]),
+    );
+    expect(groups.map((g) => g.reason)).toEqual([BulkSkipReason.OVERDUE, BulkSkipReason.WRONG_STATUS]);
+    expect(groups[0].entries).toEqual([
+      { id: BigInt(1), title: "One" },
+      { id: BigInt(3), title: "Three" },
+    ]);
+    expect(groups[1].entries).toEqual([{ id: BigInt(2), title: "Post 2" }]);
+    expect(summarizeBulk(3, 2)).toBe("3 updated, 2 skipped");
   });
 });

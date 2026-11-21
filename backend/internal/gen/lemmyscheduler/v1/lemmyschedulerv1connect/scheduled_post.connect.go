@@ -48,6 +48,9 @@ const (
 	// ScheduledPostServiceDeleteScheduledPostProcedure is the fully-qualified name of the
 	// ScheduledPostService's DeleteScheduledPost RPC.
 	ScheduledPostServiceDeleteScheduledPostProcedure = "/lemmyscheduler.v1.ScheduledPostService/DeleteScheduledPost"
+	// ScheduledPostServiceBulkUpdateScheduledPostsProcedure is the fully-qualified name of the
+	// ScheduledPostService's BulkUpdateScheduledPosts RPC.
+	ScheduledPostServiceBulkUpdateScheduledPostsProcedure = "/lemmyscheduler.v1.ScheduledPostService/BulkUpdateScheduledPosts"
 )
 
 // ScheduledPostServiceClient is a client for the lemmyscheduler.v1.ScheduledPostService service.
@@ -57,6 +60,7 @@ type ScheduledPostServiceClient interface {
 	ListScheduledPosts(context.Context, *connect.Request[v1.ListScheduledPostsRequest]) (*connect.Response[v1.ListScheduledPostsResponse], error)
 	UpdateScheduledPost(context.Context, *connect.Request[v1.UpdateScheduledPostRequest]) (*connect.Response[v1.UpdateScheduledPostResponse], error)
 	DeleteScheduledPost(context.Context, *connect.Request[v1.DeleteScheduledPostRequest]) (*connect.Response[v1.DeleteScheduledPostResponse], error)
+	BulkUpdateScheduledPosts(context.Context, *connect.Request[v1.BulkUpdateScheduledPostsRequest]) (*connect.Response[v1.BulkUpdateScheduledPostsResponse], error)
 }
 
 // NewScheduledPostServiceClient constructs a client for the lemmyscheduler.v1.ScheduledPostService
@@ -100,16 +104,23 @@ func NewScheduledPostServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(scheduledPostServiceMethods.ByName("DeleteScheduledPost")),
 			connect.WithClientOptions(opts...),
 		),
+		bulkUpdateScheduledPosts: connect.NewClient[v1.BulkUpdateScheduledPostsRequest, v1.BulkUpdateScheduledPostsResponse](
+			httpClient,
+			baseURL+ScheduledPostServiceBulkUpdateScheduledPostsProcedure,
+			connect.WithSchema(scheduledPostServiceMethods.ByName("BulkUpdateScheduledPosts")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // scheduledPostServiceClient implements ScheduledPostServiceClient.
 type scheduledPostServiceClient struct {
-	createScheduledPost *connect.Client[v1.CreateScheduledPostRequest, v1.CreateScheduledPostResponse]
-	getScheduledPost    *connect.Client[v1.GetScheduledPostRequest, v1.GetScheduledPostResponse]
-	listScheduledPosts  *connect.Client[v1.ListScheduledPostsRequest, v1.ListScheduledPostsResponse]
-	updateScheduledPost *connect.Client[v1.UpdateScheduledPostRequest, v1.UpdateScheduledPostResponse]
-	deleteScheduledPost *connect.Client[v1.DeleteScheduledPostRequest, v1.DeleteScheduledPostResponse]
+	createScheduledPost      *connect.Client[v1.CreateScheduledPostRequest, v1.CreateScheduledPostResponse]
+	getScheduledPost         *connect.Client[v1.GetScheduledPostRequest, v1.GetScheduledPostResponse]
+	listScheduledPosts       *connect.Client[v1.ListScheduledPostsRequest, v1.ListScheduledPostsResponse]
+	updateScheduledPost      *connect.Client[v1.UpdateScheduledPostRequest, v1.UpdateScheduledPostResponse]
+	deleteScheduledPost      *connect.Client[v1.DeleteScheduledPostRequest, v1.DeleteScheduledPostResponse]
+	bulkUpdateScheduledPosts *connect.Client[v1.BulkUpdateScheduledPostsRequest, v1.BulkUpdateScheduledPostsResponse]
 }
 
 // CreateScheduledPost calls lemmyscheduler.v1.ScheduledPostService.CreateScheduledPost.
@@ -137,6 +148,11 @@ func (c *scheduledPostServiceClient) DeleteScheduledPost(ctx context.Context, re
 	return c.deleteScheduledPost.CallUnary(ctx, req)
 }
 
+// BulkUpdateScheduledPosts calls lemmyscheduler.v1.ScheduledPostService.BulkUpdateScheduledPosts.
+func (c *scheduledPostServiceClient) BulkUpdateScheduledPosts(ctx context.Context, req *connect.Request[v1.BulkUpdateScheduledPostsRequest]) (*connect.Response[v1.BulkUpdateScheduledPostsResponse], error) {
+	return c.bulkUpdateScheduledPosts.CallUnary(ctx, req)
+}
+
 // ScheduledPostServiceHandler is an implementation of the lemmyscheduler.v1.ScheduledPostService
 // service.
 type ScheduledPostServiceHandler interface {
@@ -145,6 +161,7 @@ type ScheduledPostServiceHandler interface {
 	ListScheduledPosts(context.Context, *connect.Request[v1.ListScheduledPostsRequest]) (*connect.Response[v1.ListScheduledPostsResponse], error)
 	UpdateScheduledPost(context.Context, *connect.Request[v1.UpdateScheduledPostRequest]) (*connect.Response[v1.UpdateScheduledPostResponse], error)
 	DeleteScheduledPost(context.Context, *connect.Request[v1.DeleteScheduledPostRequest]) (*connect.Response[v1.DeleteScheduledPostResponse], error)
+	BulkUpdateScheduledPosts(context.Context, *connect.Request[v1.BulkUpdateScheduledPostsRequest]) (*connect.Response[v1.BulkUpdateScheduledPostsResponse], error)
 }
 
 // NewScheduledPostServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -184,6 +201,12 @@ func NewScheduledPostServiceHandler(svc ScheduledPostServiceHandler, opts ...con
 		connect.WithSchema(scheduledPostServiceMethods.ByName("DeleteScheduledPost")),
 		connect.WithHandlerOptions(opts...),
 	)
+	scheduledPostServiceBulkUpdateScheduledPostsHandler := connect.NewUnaryHandler(
+		ScheduledPostServiceBulkUpdateScheduledPostsProcedure,
+		svc.BulkUpdateScheduledPosts,
+		connect.WithSchema(scheduledPostServiceMethods.ByName("BulkUpdateScheduledPosts")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/lemmyscheduler.v1.ScheduledPostService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ScheduledPostServiceCreateScheduledPostProcedure:
@@ -196,6 +219,8 @@ func NewScheduledPostServiceHandler(svc ScheduledPostServiceHandler, opts ...con
 			scheduledPostServiceUpdateScheduledPostHandler.ServeHTTP(w, r)
 		case ScheduledPostServiceDeleteScheduledPostProcedure:
 			scheduledPostServiceDeleteScheduledPostHandler.ServeHTTP(w, r)
+		case ScheduledPostServiceBulkUpdateScheduledPostsProcedure:
+			scheduledPostServiceBulkUpdateScheduledPostsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -223,4 +248,8 @@ func (UnimplementedScheduledPostServiceHandler) UpdateScheduledPost(context.Cont
 
 func (UnimplementedScheduledPostServiceHandler) DeleteScheduledPost(context.Context, *connect.Request[v1.DeleteScheduledPostRequest]) (*connect.Response[v1.DeleteScheduledPostResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("lemmyscheduler.v1.ScheduledPostService.DeleteScheduledPost is not implemented"))
+}
+
+func (UnimplementedScheduledPostServiceHandler) BulkUpdateScheduledPosts(context.Context, *connect.Request[v1.BulkUpdateScheduledPostsRequest]) (*connect.Response[v1.BulkUpdateScheduledPostsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("lemmyscheduler.v1.ScheduledPostService.BulkUpdateScheduledPosts is not implemented"))
 }

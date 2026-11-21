@@ -22,6 +22,7 @@ type fakeScheduledPostStore struct {
 	nextID    int64
 	listPages [][]scheduledposts.ScheduledPost
 	listCalls []scheduledposts.ListOptions
+	bulkCalls []scheduledposts.BulkRequest
 }
 
 func newFakeScheduledPostStore(posts ...scheduledposts.ScheduledPost) *fakeScheduledPostStore {
@@ -91,6 +92,24 @@ func (s *fakeScheduledPostStore) DeleteScheduledPost(_ context.Context, id int64
 	}
 	delete(s.posts, id)
 	return nil
+}
+
+func (s *fakeScheduledPostStore) BulkUpdate(_ context.Context, request scheduledposts.BulkRequest) (scheduledposts.BulkResult, error) {
+	s.bulkCalls = append(s.bulkCalls, request)
+	var result scheduledposts.BulkResult
+	for _, id := range request.IDs {
+		post, ok := s.posts[id]
+		if !ok {
+			result.Skipped = append(result.Skipped, scheduledposts.BulkSkip{ID: id, Reason: scheduledposts.SkipNotFound, Message: "not found"})
+			continue
+		}
+		if skip, ok := scheduledposts.CheckBulk(request, post, time.Now()); !ok {
+			result.Skipped = append(result.Skipped, skip)
+			continue
+		}
+		result.UpdatedIDs = append(result.UpdatedIDs, id)
+	}
+	return result, nil
 }
 
 func scheduledPostHandler(store scheduledposts.Store) http.Handler {
@@ -232,3 +251,56 @@ func TestScheduledPostNotFoundErrorMapping(t *testing.T) {
 }
 
 var _ scheduledposts.Store = (*fakeScheduledPostStore)(nil)
+
+func TestBulkUpdateScheduledPostsValidation(t *testing.T) {
+	ids := make([]string, 201)
+	for i := range ids {
+		ids[i] = "1"
+	}
+	bodies := map[string]string{
+		"empty ids":       `{"ids":[],"action":"BULK_ACTION_PAUSE"}`,
+		"too many ids":    `{"ids":[` + strings.Join(ids, ",") + `],"action":"BULK_ACTION_PAUSE"}`,
+		"non-positive id": `{"ids":[0],"action":"BULK_ACTION_PAUSE"}`,
+		"unspecified":     `{"ids":[1]}`,
+		"delay missing":   `{"ids":[1],"action":"BULK_ACTION_DELAY"}`,
+		"delay negative":  `{"ids":[1],"action":"BULK_ACTION_DELAY","delaySeconds":"-5"}`,
+		"delay too large": `{"ids":[1],"action":"BULK_ACTION_DELAY","delaySeconds":"31536001"}`,
+		"delay on pause":  `{"ids":[1],"action":"BULK_ACTION_PAUSE","delaySeconds":"60"}`,
+	}
+	for name, body := range bodies {
+		t.Run(name, func(t *testing.T) {
+			store := newFakeScheduledPostStore()
+			res := postConnectJSON(t, scheduledPostHandler(store), "/lemmyscheduler.v1.ScheduledPostService/BulkUpdateScheduledPosts", body)
+			assert.Equal(t, http.StatusBadRequest, res.Code, res.Body.String())
+			assert.Empty(t, store.bulkCalls)
+		})
+	}
+}
+
+func TestBulkUpdateScheduledPostsResponseShape(t *testing.T) {
+	future := time.Now().UTC().Add(time.Hour)
+	past := time.Now().UTC().Add(-time.Hour)
+	store := newFakeScheduledPostStore(
+		scheduledposts.ScheduledPost{ID: 1, Status: scheduledposts.StatusPaused, ScheduledAt: &future},
+		scheduledposts.ScheduledPost{ID: 2, Status: scheduledposts.StatusPaused, ScheduledAt: &past},
+		scheduledposts.ScheduledPost{ID: 3, Status: scheduledposts.StatusDraft},
+	)
+	res := postConnectJSON(t, scheduledPostHandler(store), "/lemmyscheduler.v1.ScheduledPostService/BulkUpdateScheduledPosts",
+		`{"ids":[1,2,3,3,4],"action":"BULK_ACTION_RESUME"}`)
+	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+
+	var body struct {
+		UpdatedIDs []string `json:"updatedIds"`
+		Skipped    []struct {
+			ID     string `json:"id"`
+			Reason string `json:"reason"`
+		} `json:"skipped"`
+	}
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &body))
+	assert.Equal(t, []string{"1"}, body.UpdatedIDs)
+	require.Len(t, body.Skipped, 3)
+	assert.Equal(t, "BULK_SKIP_REASON_OVERDUE", body.Skipped[0].Reason)
+	assert.Equal(t, "BULK_SKIP_REASON_WRONG_STATUS", body.Skipped[1].Reason)
+	assert.Equal(t, "BULK_SKIP_REASON_NOT_FOUND", body.Skipped[2].Reason)
+	assert.Equal(t, []int64{1, 2, 3, 4}, store.bulkCalls[0].IDs)
+}

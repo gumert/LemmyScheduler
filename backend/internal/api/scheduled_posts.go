@@ -155,6 +155,61 @@ func (s *ScheduledPostServer) DeleteScheduledPost(ctx context.Context, req *conn
 	return connect.NewResponse(&lemmyschedulerv1.DeleteScheduledPostResponse{}), nil
 }
 
+func (s *ScheduledPostServer) BulkUpdateScheduledPosts(ctx context.Context, req *connect.Request[lemmyschedulerv1.BulkUpdateScheduledPostsRequest]) (*connect.Response[lemmyschedulerv1.BulkUpdateScheduledPostsResponse], error) {
+	delaySeconds := req.Msg.GetDelaySeconds()
+	if delaySeconds < 0 || delaySeconds > int64(scheduledposts.MaxBulkDelay/time.Second) {
+		return nil, invalidArgument("delay_seconds is out of range")
+	}
+	request := scheduledposts.BulkRequest{
+		IDs:    req.Msg.GetIds(),
+		Action: bulkActionFromProto(req.Msg.GetAction()),
+		Delay:  time.Duration(delaySeconds) * time.Second,
+	}
+	request, err := scheduledposts.ValidateBulk(request)
+	if err != nil {
+		return nil, scheduledPostError(err)
+	}
+	result, err := s.store.BulkUpdate(ctx, request)
+	if err != nil {
+		return nil, scheduledPostError(err)
+	}
+	response := &lemmyschedulerv1.BulkUpdateScheduledPostsResponse{UpdatedIds: result.UpdatedIDs}
+	for _, skip := range result.Skipped {
+		response.Skipped = append(response.Skipped, &lemmyschedulerv1.BulkSkippedPost{
+			Id: skip.ID, Reason: skipReasonToProto(skip.Reason), Message: skip.Message,
+		})
+	}
+	return connect.NewResponse(response), nil
+}
+
+func bulkActionFromProto(action lemmyschedulerv1.BulkAction) scheduledposts.BulkAction {
+	switch action {
+	case lemmyschedulerv1.BulkAction_BULK_ACTION_DELETE:
+		return scheduledposts.BulkDelete
+	case lemmyschedulerv1.BulkAction_BULK_ACTION_PAUSE:
+		return scheduledposts.BulkPause
+	case lemmyschedulerv1.BulkAction_BULK_ACTION_RESUME:
+		return scheduledposts.BulkResume
+	case lemmyschedulerv1.BulkAction_BULK_ACTION_DELAY:
+		return scheduledposts.BulkDelay
+	default:
+		return ""
+	}
+}
+
+func skipReasonToProto(reason scheduledposts.SkipReason) lemmyschedulerv1.BulkSkipReason {
+	switch reason {
+	case scheduledposts.SkipNotFound:
+		return lemmyschedulerv1.BulkSkipReason_BULK_SKIP_REASON_NOT_FOUND
+	case scheduledposts.SkipWrongStatus:
+		return lemmyschedulerv1.BulkSkipReason_BULK_SKIP_REASON_WRONG_STATUS
+	case scheduledposts.SkipOverdue:
+		return lemmyschedulerv1.BulkSkipReason_BULK_SKIP_REASON_OVERDUE
+	default:
+		return lemmyschedulerv1.BulkSkipReason_BULK_SKIP_REASON_UNSPECIFIED
+	}
+}
+
 type pageToken struct {
 	FormatVersion int       `json:"v"`
 	SortTime      time.Time `json:"t"`
