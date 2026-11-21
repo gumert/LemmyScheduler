@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file lemmyscheduler/v1/scheduled_post.proto.
  */
 export const file_lemmyscheduler_v1_scheduled_post: GenFile = /*@__PURE__*/
-  fileDesc("CiZsZW1teXNjaGVkdWxlci92MS9zY2hlZHVsZWRfcG9zdC5wcm90bxIRbGVtbXlzY2hlZHVsZXIudjEi5wMKDVNjaGVkdWxlZFBvc3QSCgoCaWQYASABKAMSDQoFdGl0bGUYAiABKAkSDAoEYm9keRgDIAEoCRILCgN1cmwYBCABKAkSEQoJY29tbXVuaXR5GAUgASgJEgwKBG5zZncYBiABKAgSNgoGc3RhdHVzGAcgASgOMiYubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdFN0YXR1cxIwCgxzY2hlZHVsZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCXBvc3RlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFgoObGVtbXlfcG9zdF91cmwYCiABKAkSLgoKY3JlYXRlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoLdGl0bGVfaW1hZ2UYDiABKAsyHC5sZW1teXNjaGVkdWxlci52MS5Qb3N0SW1hZ2USLAoGaW1hZ2VzGA8gAygLMhwubGVtbXlzY2hlZHVsZXIudjEuUG9zdEltYWdlSgQICxAMUgd2ZXJzaW9uIl0KCVBvc3RJbWFnZRIKCgJpZBgBIAEoAxIUCgxjb250ZW50X3R5cGUYAiABKAkSLgoKY3JlYXRlZF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiyQEKElNjaGVkdWxlZFBvc3RJbnB1dBINCgV0aXRsZRgBIAEoCRIMCgRib2R5GAIgASgJEgsKA3VybBgDIAEoCRIRCgljb21tdW5pdHkYBCABKAkSDAoEbnNmdxgFIAEoCBI2CgZzdGF0dXMYBiABKA4yJi5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0U3RhdHVzEjAKDHNjaGVkdWxlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiWwoaQ3JlYXRlU2NoZWR1bGVkUG9zdFJlcXVlc3QSPQoOc2NoZWR1bGVkX3Bvc3QYASABKAsyJS5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0SW5wdXQiVwobQ3JlYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEjgKDnNjaGVkdWxlZF9wb3N0GAEgASgLMiAubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdCIlChdHZXRTY2hlZHVsZWRQb3N0UmVxdWVzdBIKCgJpZBgBIAEoAyJUChhHZXRTY2hlZHVsZWRQb3N0UmVzcG9uc2USOAoOc2NoZWR1bGVkX3Bvc3QYASABKAsyIC5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0IpABChlMaXN0U2NoZWR1bGVkUG9zdHNSZXF1ZXN0EjgKCHN0YXR1c2VzGAEgAygOMiYubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdFN0YXR1cxISCgpkZXNjZW5kaW5nGAIgASgIEhEKCXBhZ2Vfc2l6ZRgDIAEoBRISCgpwYWdlX3Rva2VuGAQgASgJInAKGkxpc3RTY2hlZHVsZWRQb3N0c1Jlc3BvbnNlEjkKD3NjaGVkdWxlZF9wb3N0cxgBIAMoCzIgLmxlbW15c2NoZWR1bGVyLnYxLlNjaGVkdWxlZFBvc3QSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJInYKGlVwZGF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0EgoKAmlkGAEgASgDEj0KDnNjaGVkdWxlZF9wb3N0GAMgASgLMiUubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdElucHV0SgQIAhADUgd2ZXJzaW9uIlcKG1VwZGF0ZVNjaGVkdWxlZFBvc3RSZXNwb25zZRI4Cg5zY2hlZHVsZWRfcG9zdBgBIAEoCzIgLmxlbW15c2NoZWR1bGVyLnYxLlNjaGVkdWxlZFBvc3QiKAoaRGVsZXRlU2NoZWR1bGVkUG9zdFJlcXVlc3QSCgoCaWQYASABKAMiHQobRGVsZXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlKrMCChNTY2hlZHVsZWRQb3N0U3RhdHVzEiUKIVNDSEVEVUxFRF9QT1NUX1NUQVRVU19VTlNQRUNJRklFRBAAEh8KG1NDSEVEVUxFRF9QT1NUX1NUQVRVU19EUkFGVBABEiMKH1NDSEVEVUxFRF9QT1NUX1NUQVRVU19TQ0hFRFVMRUQQAhIgChxTQ0hFRFVMRURfUE9TVF9TVEFUVVNfUEFVU0VEEAMSIQodU0NIRURVTEVEX1BPU1RfU1RBVFVTX1BPU1RJTkcQBBIgChxTQ0hFRFVMRURfUE9TVF9TVEFUVVNfUE9TVEVEEAUSJgoiU0NIRURVTEVEX1BPU1RfU1RBVFVTX05FRURTX1JFVklFVxAGEiAKHFNDSEVEVUxFRF9QT1NUX1NUQVRVU19GQUlMRUQQBzLYBAoUU2NoZWR1bGVkUG9zdFNlcnZpY2USdAoTQ3JlYXRlU2NoZWR1bGVkUG9zdBItLmxlbW15c2NoZWR1bGVyLnYxLkNyZWF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0Gi4ubGVtbXlzY2hlZHVsZXIudjEuQ3JlYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEmsKEEdldFNjaGVkdWxlZFBvc3QSKi5sZW1teXNjaGVkdWxlci52MS5HZXRTY2hlZHVsZWRQb3N0UmVxdWVzdBorLmxlbW15c2NoZWR1bGVyLnYxLkdldFNjaGVkdWxlZFBvc3RSZXNwb25zZRJxChJMaXN0U2NoZWR1bGVkUG9zdHMSLC5sZW1teXNjaGVkdWxlci52MS5MaXN0U2NoZWR1bGVkUG9zdHNSZXF1ZXN0Gi0ubGVtbXlzY2hlZHVsZXIudjEuTGlzdFNjaGVkdWxlZFBvc3RzUmVzcG9uc2USdAoTVXBkYXRlU2NoZWR1bGVkUG9zdBItLmxlbW15c2NoZWR1bGVyLnYxLlVwZGF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0Gi4ubGVtbXlzY2hlZHVsZXIudjEuVXBkYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEnQKE0RlbGV0ZVNjaGVkdWxlZFBvc3QSLS5sZW1teXNjaGVkdWxlci52MS5EZWxldGVTY2hlZHVsZWRQb3N0UmVxdWVzdBouLmxlbW15c2NoZWR1bGVyLnYxLkRlbGV0ZVNjaGVkdWxlZFBvc3RSZXNwb25zZULqAQoVY29tLmxlbW15c2NoZWR1bGVyLnYxQhJTY2hlZHVsZWRQb3N0UHJvdG9QAVpYZ2l0aHViLmNvbS9ndW1lcnQvTGVtbXlTY2hlZHVsZXIvYmFja2VuZC9pbnRlcm5hbC9nZW4vbGVtbXlzY2hlZHVsZXIvdjE7bGVtbXlzY2hlZHVsZXJ2MaICA0xYWKoCEUxlbW15c2NoZWR1bGVyLlYxygIRTGVtbXlzY2hlZHVsZXJcVjHiAh1MZW1teXNjaGVkdWxlclxWMVxHUEJNZXRhZGF0YeoCEkxlbW15c2NoZWR1bGVyOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("CiZsZW1teXNjaGVkdWxlci92MS9zY2hlZHVsZWRfcG9zdC5wcm90bxIRbGVtbXlzY2hlZHVsZXIudjEi5wMKDVNjaGVkdWxlZFBvc3QSCgoCaWQYASABKAMSDQoFdGl0bGUYAiABKAkSDAoEYm9keRgDIAEoCRILCgN1cmwYBCABKAkSEQoJY29tbXVuaXR5GAUgASgJEgwKBG5zZncYBiABKAgSNgoGc3RhdHVzGAcgASgOMiYubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdFN0YXR1cxIwCgxzY2hlZHVsZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi0KCXBvc3RlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFgoObGVtbXlfcG9zdF91cmwYCiABKAkSLgoKY3JlYXRlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoLdGl0bGVfaW1hZ2UYDiABKAsyHC5sZW1teXNjaGVkdWxlci52MS5Qb3N0SW1hZ2USLAoGaW1hZ2VzGA8gAygLMhwubGVtbXlzY2hlZHVsZXIudjEuUG9zdEltYWdlSgQICxAMUgd2ZXJzaW9uIl0KCVBvc3RJbWFnZRIKCgJpZBgBIAEoAxIUCgxjb250ZW50X3R5cGUYAiABKAkSLgoKY3JlYXRlZF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiyQEKElNjaGVkdWxlZFBvc3RJbnB1dBINCgV0aXRsZRgBIAEoCRIMCgRib2R5GAIgASgJEgsKA3VybBgDIAEoCRIRCgljb21tdW5pdHkYBCABKAkSDAoEbnNmdxgFIAEoCBI2CgZzdGF0dXMYBiABKA4yJi5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0U3RhdHVzEjAKDHNjaGVkdWxlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiWwoaQ3JlYXRlU2NoZWR1bGVkUG9zdFJlcXVlc3QSPQoOc2NoZWR1bGVkX3Bvc3QYASABKAsyJS5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0SW5wdXQiVwobQ3JlYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEjgKDnNjaGVkdWxlZF9wb3N0GAEgASgLMiAubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdCIlChdHZXRTY2hlZHVsZWRQb3N0UmVxdWVzdBIKCgJpZBgBIAEoAyJUChhHZXRTY2hlZHVsZWRQb3N0UmVzcG9uc2USOAoOc2NoZWR1bGVkX3Bvc3QYASABKAsyIC5sZW1teXNjaGVkdWxlci52MS5TY2hlZHVsZWRQb3N0IpABChlMaXN0U2NoZWR1bGVkUG9zdHNSZXF1ZXN0EjgKCHN0YXR1c2VzGAEgAygOMiYubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdFN0YXR1cxISCgpkZXNjZW5kaW5nGAIgASgIEhEKCXBhZ2Vfc2l6ZRgDIAEoBRISCgpwYWdlX3Rva2VuGAQgASgJInAKGkxpc3RTY2hlZHVsZWRQb3N0c1Jlc3BvbnNlEjkKD3NjaGVkdWxlZF9wb3N0cxgBIAMoCzIgLmxlbW15c2NoZWR1bGVyLnYxLlNjaGVkdWxlZFBvc3QSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJInYKGlVwZGF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0EgoKAmlkGAEgASgDEj0KDnNjaGVkdWxlZF9wb3N0GAMgASgLMiUubGVtbXlzY2hlZHVsZXIudjEuU2NoZWR1bGVkUG9zdElucHV0SgQIAhADUgd2ZXJzaW9uIlcKG1VwZGF0ZVNjaGVkdWxlZFBvc3RSZXNwb25zZRI4Cg5zY2hlZHVsZWRfcG9zdBgBIAEoCzIgLmxlbW15c2NoZWR1bGVyLnYxLlNjaGVkdWxlZFBvc3QiKAoaRGVsZXRlU2NoZWR1bGVkUG9zdFJlcXVlc3QSCgoCaWQYASABKAMiHQobRGVsZXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlInQKH0J1bGtVcGRhdGVTY2hlZHVsZWRQb3N0c1JlcXVlc3QSCwoDaWRzGAEgAygDEi0KBmFjdGlvbhgCIAEoDjIdLmxlbW15c2NoZWR1bGVyLnYxLkJ1bGtBY3Rpb24SFQoNZGVsYXlfc2Vjb25kcxgDIAEoAyJhCg9CdWxrU2tpcHBlZFBvc3QSCgoCaWQYASABKAMSMQoGcmVhc29uGAIgASgOMiEubGVtbXlzY2hlZHVsZXIudjEuQnVsa1NraXBSZWFzb24SDwoHbWVzc2FnZRgDIAEoCSJsCiBCdWxrVXBkYXRlU2NoZWR1bGVkUG9zdHNSZXNwb25zZRITCgt1cGRhdGVkX2lkcxgBIAMoAxIzCgdza2lwcGVkGAIgAygLMiIubGVtbXlzY2hlZHVsZXIudjEuQnVsa1NraXBwZWRQb3N0KrMCChNTY2hlZHVsZWRQb3N0U3RhdHVzEiUKIVNDSEVEVUxFRF9QT1NUX1NUQVRVU19VTlNQRUNJRklFRBAAEh8KG1NDSEVEVUxFRF9QT1NUX1NUQVRVU19EUkFGVBABEiMKH1NDSEVEVUxFRF9QT1NUX1NUQVRVU19TQ0hFRFVMRUQQAhIgChxTQ0hFRFVMRURfUE9TVF9TVEFUVVNfUEFVU0VEEAMSIQodU0NIRURVTEVEX1BPU1RfU1RBVFVTX1BPU1RJTkcQBBIgChxTQ0hFRFVMRURfUE9TVF9TVEFUVVNfUE9TVEVEEAUSJgoiU0NIRURVTEVEX1BPU1RfU1RBVFVTX05FRURTX1JFVklFVxAGEiAKHFNDSEVEVUxFRF9QT1NUX1NUQVRVU19GQUlMRUQQByqHAQoKQnVsa0FjdGlvbhIbChdCVUxLX0FDVElPTl9VTlNQRUNJRklFRBAAEhYKEkJVTEtfQUNUSU9OX0RFTEVURRABEhUKEUJVTEtfQUNUSU9OX1BBVVNFEAISFgoSQlVMS19BQ1RJT05fUkVTVU1FEAMSFQoRQlVMS19BQ1RJT05fREVMQVkQBCqTAQoOQnVsa1NraXBSZWFzb24SIAocQlVMS19TS0lQX1JFQVNPTl9VTlNQRUNJRklFRBAAEh4KGkJVTEtfU0tJUF9SRUFTT05fTk9UX0ZPVU5EEAESIQodQlVMS19TS0lQX1JFQVNPTl9XUk9OR19TVEFUVVMQAhIcChhCVUxLX1NLSVBfUkVBU09OX09WRVJEVUUQAzLeBQoUU2NoZWR1bGVkUG9zdFNlcnZpY2USdAoTQ3JlYXRlU2NoZWR1bGVkUG9zdBItLmxlbW15c2NoZWR1bGVyLnYxLkNyZWF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0Gi4ubGVtbXlzY2hlZHVsZXIudjEuQ3JlYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEmsKEEdldFNjaGVkdWxlZFBvc3QSKi5sZW1teXNjaGVkdWxlci52MS5HZXRTY2hlZHVsZWRQb3N0UmVxdWVzdBorLmxlbW15c2NoZWR1bGVyLnYxLkdldFNjaGVkdWxlZFBvc3RSZXNwb25zZRJxChJMaXN0U2NoZWR1bGVkUG9zdHMSLC5sZW1teXNjaGVkdWxlci52MS5MaXN0U2NoZWR1bGVkUG9zdHNSZXF1ZXN0Gi0ubGVtbXlzY2hlZHVsZXIudjEuTGlzdFNjaGVkdWxlZFBvc3RzUmVzcG9uc2USdAoTVXBkYXRlU2NoZWR1bGVkUG9zdBItLmxlbW15c2NoZWR1bGVyLnYxLlVwZGF0ZVNjaGVkdWxlZFBvc3RSZXF1ZXN0Gi4ubGVtbXlzY2hlZHVsZXIudjEuVXBkYXRlU2NoZWR1bGVkUG9zdFJlc3BvbnNlEnQKE0RlbGV0ZVNjaGVkdWxlZFBvc3QSLS5sZW1teXNjaGVkdWxlci52MS5EZWxldGVTY2hlZHVsZWRQb3N0UmVxdWVzdBouLmxlbW15c2NoZWR1bGVyLnYxLkRlbGV0ZVNjaGVkdWxlZFBvc3RSZXNwb25zZRKDAQoYQnVsa1VwZGF0ZVNjaGVkdWxlZFBvc3RzEjIubGVtbXlzY2hlZHVsZXIudjEuQnVsa1VwZGF0ZVNjaGVkdWxlZFBvc3RzUmVxdWVzdBozLmxlbW15c2NoZWR1bGVyLnYxLkJ1bGtVcGRhdGVTY2hlZHVsZWRQb3N0c1Jlc3BvbnNlQuoBChVjb20ubGVtbXlzY2hlZHVsZXIudjFCElNjaGVkdWxlZFBvc3RQcm90b1ABWlhnaXRodWIuY29tL2d1bWVydC9MZW1teVNjaGVkdWxlci9iYWNrZW5kL2ludGVybmFsL2dlbi9sZW1teXNjaGVkdWxlci92MTtsZW1teXNjaGVkdWxlcnYxogIDTFhYqgIRTGVtbXlzY2hlZHVsZXIuVjHKAhFMZW1teXNjaGVkdWxlclxWMeICHUxlbW15c2NoZWR1bGVyXFYxXEdQQk1ldGFkYXRh6gISTGVtbXlzY2hlZHVsZXI6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message lemmyscheduler.v1.ScheduledPost
@@ -362,6 +362,86 @@ export const DeleteScheduledPostResponseSchema: GenMessage<DeleteScheduledPostRe
   messageDesc(file_lemmyscheduler_v1_scheduled_post, 12);
 
 /**
+ * @generated from message lemmyscheduler.v1.BulkUpdateScheduledPostsRequest
+ */
+export type BulkUpdateScheduledPostsRequest = Message<"lemmyscheduler.v1.BulkUpdateScheduledPostsRequest"> & {
+  /**
+   * 1 to 200 ids.
+   *
+   * @generated from field: repeated int64 ids = 1;
+   */
+  ids: bigint[];
+
+  /**
+   * @generated from field: lemmyscheduler.v1.BulkAction action = 2;
+   */
+  action: BulkAction;
+
+  /**
+   * Required and positive (at most 365 days) for DELAY; must be 0 otherwise.
+   *
+   * @generated from field: int64 delay_seconds = 3;
+   */
+  delaySeconds: bigint;
+};
+
+/**
+ * Describes the message lemmyscheduler.v1.BulkUpdateScheduledPostsRequest.
+ * Use `create(BulkUpdateScheduledPostsRequestSchema)` to create a new message.
+ */
+export const BulkUpdateScheduledPostsRequestSchema: GenMessage<BulkUpdateScheduledPostsRequest> = /*@__PURE__*/
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 13);
+
+/**
+ * @generated from message lemmyscheduler.v1.BulkSkippedPost
+ */
+export type BulkSkippedPost = Message<"lemmyscheduler.v1.BulkSkippedPost"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: lemmyscheduler.v1.BulkSkipReason reason = 2;
+   */
+  reason: BulkSkipReason;
+
+  /**
+   * @generated from field: string message = 3;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message lemmyscheduler.v1.BulkSkippedPost.
+ * Use `create(BulkSkippedPostSchema)` to create a new message.
+ */
+export const BulkSkippedPostSchema: GenMessage<BulkSkippedPost> = /*@__PURE__*/
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 14);
+
+/**
+ * @generated from message lemmyscheduler.v1.BulkUpdateScheduledPostsResponse
+ */
+export type BulkUpdateScheduledPostsResponse = Message<"lemmyscheduler.v1.BulkUpdateScheduledPostsResponse"> & {
+  /**
+   * @generated from field: repeated int64 updated_ids = 1;
+   */
+  updatedIds: bigint[];
+
+  /**
+   * @generated from field: repeated lemmyscheduler.v1.BulkSkippedPost skipped = 2;
+   */
+  skipped: BulkSkippedPost[];
+};
+
+/**
+ * Describes the message lemmyscheduler.v1.BulkUpdateScheduledPostsResponse.
+ * Use `create(BulkUpdateScheduledPostsResponseSchema)` to create a new message.
+ */
+export const BulkUpdateScheduledPostsResponseSchema: GenMessage<BulkUpdateScheduledPostsResponse> = /*@__PURE__*/
+  messageDesc(file_lemmyscheduler_v1_scheduled_post, 15);
+
+/**
  * @generated from enum lemmyscheduler.v1.ScheduledPostStatus
  */
 export enum ScheduledPostStatus {
@@ -413,6 +493,73 @@ export const ScheduledPostStatusSchema: GenEnum<ScheduledPostStatus> = /*@__PURE
   enumDesc(file_lemmyscheduler_v1_scheduled_post, 0);
 
 /**
+ * @generated from enum lemmyscheduler.v1.BulkAction
+ */
+export enum BulkAction {
+  /**
+   * @generated from enum value: BULK_ACTION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: BULK_ACTION_DELETE = 1;
+   */
+  DELETE = 1,
+
+  /**
+   * @generated from enum value: BULK_ACTION_PAUSE = 2;
+   */
+  PAUSE = 2,
+
+  /**
+   * @generated from enum value: BULK_ACTION_RESUME = 3;
+   */
+  RESUME = 3,
+
+  /**
+   * @generated from enum value: BULK_ACTION_DELAY = 4;
+   */
+  DELAY = 4,
+}
+
+/**
+ * Describes the enum lemmyscheduler.v1.BulkAction.
+ */
+export const BulkActionSchema: GenEnum<BulkAction> = /*@__PURE__*/
+  enumDesc(file_lemmyscheduler_v1_scheduled_post, 1);
+
+/**
+ * @generated from enum lemmyscheduler.v1.BulkSkipReason
+ */
+export enum BulkSkipReason {
+  /**
+   * @generated from enum value: BULK_SKIP_REASON_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: BULK_SKIP_REASON_NOT_FOUND = 1;
+   */
+  NOT_FOUND = 1,
+
+  /**
+   * @generated from enum value: BULK_SKIP_REASON_WRONG_STATUS = 2;
+   */
+  WRONG_STATUS = 2,
+
+  /**
+   * @generated from enum value: BULK_SKIP_REASON_OVERDUE = 3;
+   */
+  OVERDUE = 3,
+}
+
+/**
+ * Describes the enum lemmyscheduler.v1.BulkSkipReason.
+ */
+export const BulkSkipReasonSchema: GenEnum<BulkSkipReason> = /*@__PURE__*/
+  enumDesc(file_lemmyscheduler_v1_scheduled_post, 2);
+
+/**
  * @generated from service lemmyscheduler.v1.ScheduledPostService
  */
 export const ScheduledPostService: GenService<{
@@ -455,6 +602,14 @@ export const ScheduledPostService: GenService<{
     methodKind: "unary";
     input: typeof DeleteScheduledPostRequestSchema;
     output: typeof DeleteScheduledPostResponseSchema;
+  },
+  /**
+   * @generated from rpc lemmyscheduler.v1.ScheduledPostService.BulkUpdateScheduledPosts
+   */
+  bulkUpdateScheduledPosts: {
+    methodKind: "unary";
+    input: typeof BulkUpdateScheduledPostsRequestSchema;
+    output: typeof BulkUpdateScheduledPostsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_lemmyscheduler_v1_scheduled_post, 0);

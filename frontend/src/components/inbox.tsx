@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import { scheduledPostClient, titleImageUrl } from "../api/client";
+import { EMPTY_SELECTION, groupSkips, selectionReducer } from "../bulk";
 import { describeApiError } from "../errors";
-import { ScheduledPostStatus, type ScheduledPost } from "../gen/lemmyscheduler/v1/scheduled_post_pb";
+import { BulkAction, ScheduledPostStatus, type ScheduledPost } from "../gen/lemmyscheduler/v1/scheduled_post_pb";
 import { bodySnippet } from "../snippet";
 import { HISTORY_STATUSES, statusClass, statusLabel, UPCOMING_STATUSES } from "../status";
 import { formatScheduledAt, localZoneName } from "../time";
+import { BulkResult, BulkToolbar, type BulkResultView } from "./bulk-toolbar";
 
 const LIST_TIMEOUT_MS = 10_000;
+const BULK_TIMEOUT_MS = 30_000;
 const PAGE_SIZE = 20;
 
 type Tab = "upcoming" | "history";
@@ -21,6 +24,7 @@ type ListState = {
   phase: "loading" | "ready" | "error";
   loadingMore: boolean;
   error: string;
+  errorKind: "more" | "refresh";
 };
 
 export function Inbox() {
@@ -78,16 +82,30 @@ function PostList({ tab }: { tab: Tab }) {
     phase: "loading",
     loadingMore: false,
     error: "",
+    errorKind: "more",
   });
+  const [selection, dispatch] = useReducer(selectionReducer, EMPTY_SELECTION);
+  const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const [result, setResult] = useState<BulkResultView | null>(null);
+  const [bulkError, setBulkError] = useState("");
+  const selectAllRef = useRef<HTMLInputElement>(null);
   const controllerRef = useRef<AbortController | null>(null);
 
   const load = useCallback(
-    async (pageToken: string) => {
+    async (pageToken: string, silent = false) => {
       controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
       const more = pageToken !== "";
-      setState((s) => (more ? { ...s, loadingMore: true, error: "" } : { ...s, phase: "loading", error: "" }));
+      // A silent refresh keeps the rows and any open bulk UI in place.
+      setState((s) =>
+        more
+          ? { ...s, loadingMore: true, error: "" }
+          : silent
+            ? { ...s, error: "" }
+            : { ...s, phase: "loading", error: "" },
+      );
       try {
         const res = await scheduledPostClient.listScheduledPosts(
           {
@@ -104,6 +122,7 @@ function PostList({ tab }: { tab: Tab }) {
           phase: "ready",
           loadingMore: false,
           error: "",
+          errorKind: "more",
         }));
       } catch (err) {
         if (controller.signal.aborted) {
@@ -112,9 +131,10 @@ function PostList({ tab }: { tab: Tab }) {
         // A failed "load more" keeps the rows already shown.
         setState((s) => ({
           ...s,
-          phase: more ? "ready" : "error",
+          phase: more || silent ? "ready" : "error",
           loadingMore: false,
           error: describeApiError(err),
+          errorKind: silent ? "refresh" : "more",
         }));
       }
     },
@@ -125,6 +145,54 @@ function PostList({ tab }: { tab: Tab }) {
     void load("");
     return () => controllerRef.current?.abort();
   }, [load]);
+
+  // Rows that left the list (deleted, or gone after a refresh) can't stay selected.
+  useEffect(() => {
+    dispatch({ type: "retain", ids: state.posts.map((post) => post.id) });
+  }, [state.posts]);
+
+  const visibleIds = state.posts.map((post) => post.id);
+  const selectedVisible = visibleIds.filter((id) => selection.has(id)).length;
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = selectedVisible > 0 && selectedVisible < visibleIds.length;
+    }
+  });
+
+  async function runBulk(action: BulkAction, delaySeconds?: number) {
+    if (busyRef.current || selection.size === 0) {
+      return;
+    }
+    if (
+      action === BulkAction.DELETE &&
+      !window.confirm(`Delete ${selection.size} post${selection.size === 1 ? "" : "s"}? This can't be undone.`)
+    ) {
+      return;
+    }
+    busyRef.current = true;
+    setBusy(true);
+    setBulkError("");
+    setResult(null);
+    const titles = new Map(state.posts.map((post) => [post.id, post.title]));
+    try {
+      const res = await scheduledPostClient.bulkUpdateScheduledPosts(
+        { ids: [...selection], action, delaySeconds: BigInt(delaySeconds ?? 0) },
+        { timeoutMs: BULK_TIMEOUT_MS },
+      );
+      dispatch({ type: "setAll", ids: res.updatedIds, selected: false });
+      setResult({
+        updated: res.updatedIds.length,
+        skipped: res.skipped.length,
+        groups: groupSkips(res.skipped, titles),
+      });
+      await load("", true);
+    } catch (err) {
+      setBulkError(describeApiError(err));
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  }
 
   if (state.phase === "loading") {
     return (
@@ -153,14 +221,40 @@ function PostList({ tab }: { tab: Tab }) {
 
   return (
     <>
+      <div className="select-bar">
+        <label className="select-all">
+          <input
+            ref={selectAllRef}
+            type="checkbox"
+            checked={selectedVisible > 0 && selectedVisible === visibleIds.length}
+            disabled={busy}
+            onChange={(event) => dispatch({ type: "setAll", ids: visibleIds, selected: event.target.checked })}
+          />
+          Select all loaded
+        </label>
+        <span className="muted">{selection.size} selected</span>
+        <BulkToolbar count={selection.size} busy={busy} onRun={(a, s) => void runBulk(a, s)} />
+      </div>
+      {bulkError && (
+        <p className="state state-error" role="alert">
+          Bulk action failed: {bulkError}
+        </p>
+      )}
+      {result && <BulkResult result={result} onDismiss={() => setResult(null)} />}
       <ul className="post-list">
         {state.posts.map((post) => (
-          <PostRow key={String(post.id)} post={post} />
+          <PostRow
+            key={String(post.id)}
+            post={post}
+            selected={selection.has(post.id)}
+            disabled={busy}
+            onToggle={() => dispatch({ type: "toggle", id: post.id })}
+          />
         ))}
       </ul>
       {state.error && (
         <p className="state state-error" role="alert">
-          Couldn&apos;t load more: {state.error}
+          {state.errorKind === "refresh" ? "Couldn't refresh" : "Couldn't load more"}: {state.error}
         </p>
       )}
       {state.nextToken && (
@@ -177,13 +271,31 @@ function PostList({ tab }: { tab: Tab }) {
   );
 }
 
-function PostRow({ post }: { post: ScheduledPost }) {
+function PostRow({
+  post,
+  selected,
+  disabled,
+  onToggle,
+}: {
+  post: ScheduledPost;
+  selected: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}) {
   const snippet = bodySnippet(post.body);
   const when = post.status === ScheduledPostStatus.POSTED ? post.postedAt : post.scheduledAt;
   const label = statusLabel(post.status);
   return (
-    <li>
-      {/* Handoff 06 adds a checkbox cell before the link. */}
+    <li className="post-item">
+      <label className="post-select">
+        <input
+          type="checkbox"
+          checked={selected}
+          disabled={disabled}
+          onChange={onToggle}
+          aria-label={`Select ${post.title}`}
+        />
+      </label>
       <Link href={`/posts/${post.id}`} className="post-row">
         <span className="thumb">
           {post.titleImage && (

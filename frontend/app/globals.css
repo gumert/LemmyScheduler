@@ -153,6 +153,50 @@ a {
   gap: 0.5rem;
 }
 
+.post-item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.post-select {
+  display: flex;
+  align-items: center;
+  padding: 0 0.4rem;
+  cursor: pointer;
+}
+
+.post-item .post-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.select-bar,
+.bulk-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.delay-group {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #343b52;
+  border-radius: 8px;
+}
+
+.select-all {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.bulk-result ul {
+  margin: 0 0 0.5rem;
+}
+
 .post-row {
   display: flex;
   gap: 0.9rem;

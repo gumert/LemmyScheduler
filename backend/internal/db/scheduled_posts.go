@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -244,6 +245,113 @@ func (s scheduledPostStore) DeleteScheduledPost(ctx context.Context, id int64) e
 		return scheduledposts.ErrNotDeletable
 	}
 	return errors.New("db: scheduled post delete affected no row")
+}
+
+func (s scheduledPostStore) BulkUpdate(ctx context.Context, request scheduledposts.BulkRequest) (scheduledposts.BulkResult, error) {
+	statuses := make([]string, 0, 7)
+	for _, status := range scheduledposts.BulkEligibleStatuses(request.Action) {
+		statuses = append(statuses, string(status))
+	}
+	var query string
+	args := []any{request.IDs, statuses}
+	switch request.Action {
+	case scheduledposts.BulkDelete:
+		query = `DELETE FROM scheduled_posts WHERE id = ANY($1::bigint[]) AND status = ANY($2::text[]) RETURNING id`
+	case scheduledposts.BulkPause:
+		query = `UPDATE scheduled_posts SET status = 'paused', updated_at = now()
+			WHERE id = ANY($1::bigint[]) AND status = ANY($2::text[]) RETURNING id`
+	case scheduledposts.BulkResume:
+		query = `UPDATE scheduled_posts SET status = 'scheduled', updated_at = now()
+			WHERE id = ANY($1::bigint[]) AND status = ANY($2::text[]) AND scheduled_at > now() RETURNING id`
+	case scheduledposts.BulkDelay:
+		query = `UPDATE scheduled_posts SET scheduled_at = scheduled_at + $3::bigint * interval '1 second', updated_at = now()
+			WHERE id = ANY($1::bigint[]) AND status = ANY($2::text[])
+			AND scheduled_at + $3::bigint * interval '1 second' > now() RETURNING id`
+		args = append(args, int64(request.Delay/time.Second))
+	default:
+		return scheduledposts.BulkResult{}, fmt.Errorf("db: unknown bulk action %q", request.Action)
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return scheduledposts.BulkResult{}, fmt.Errorf("db: begin bulk update: %w", err)
+	}
+	defer tx.Rollback(context.Background())
+
+	updated, err := scanIDs(tx.Query(ctx, query, args...))
+	if err != nil {
+		return scheduledposts.BulkResult{}, fmt.Errorf("db: bulk %s: %w", request.Action, err)
+	}
+	result := scheduledposts.BulkResult{UpdatedIDs: updated}
+	done := make(map[int64]struct{}, len(updated))
+	for _, id := range updated {
+		done[id] = struct{}{}
+	}
+	var remaining []int64
+	for _, id := range request.IDs {
+		if _, ok := done[id]; !ok {
+			remaining = append(remaining, id)
+		}
+	}
+
+	if len(remaining) > 0 {
+		rows, err := tx.Query(ctx, `SELECT id, status, scheduled_at, now() FROM scheduled_posts WHERE id = ANY($1::bigint[])`, remaining)
+		if err != nil {
+			return scheduledposts.BulkResult{}, fmt.Errorf("db: classify skipped posts: %w", err)
+		}
+		found := make(map[int64]scheduledposts.BulkSkip, len(remaining))
+		for rows.Next() {
+			var post scheduledposts.ScheduledPost
+			var status string
+			var scheduledAt pgtype.Timestamptz
+			var now time.Time
+			if err := rows.Scan(&post.ID, &status, &scheduledAt, &now); err != nil {
+				rows.Close()
+				return scheduledposts.BulkResult{}, fmt.Errorf("db: scan skipped post: %w", err)
+			}
+			post.Status = scheduledposts.Status(status)
+			if scheduledAt.Valid {
+				post.ScheduledAt = &scheduledAt.Time
+			}
+			skip, ok := scheduledposts.CheckBulk(request, post, now)
+			if ok {
+				// Changed after the write; the post no longer matches what we saw.
+				skip = scheduledposts.BulkSkip{ID: post.ID, Reason: scheduledposts.SkipWrongStatus, Message: "post changed while the action was running"}
+			}
+			found[post.ID] = skip
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return scheduledposts.BulkResult{}, fmt.Errorf("db: classify skipped posts: %w", err)
+		}
+		for _, id := range remaining {
+			skip, ok := found[id]
+			if !ok {
+				skip = scheduledposts.BulkSkip{ID: id, Reason: scheduledposts.SkipNotFound, Message: "scheduled post not found"}
+			}
+			result.Skipped = append(result.Skipped, skip)
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return scheduledposts.BulkResult{}, fmt.Errorf("db: commit bulk update: %w", err)
+	}
+	return result, nil
+}
+
+func scanIDs(rows pgx.Rows, err error) ([]int64, error) {
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
 }
 
 func scanScheduledPost(row pgx.Row) (scheduledposts.ScheduledPost, error) {

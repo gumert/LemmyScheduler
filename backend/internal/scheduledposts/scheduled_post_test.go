@@ -156,3 +156,40 @@ func errString(err error) string {
 	}
 	return err.Error()
 }
+
+func TestCheckBulk(t *testing.T) {
+	now := time.Date(2030, 1, 1, 12, 0, 0, 0, time.UTC)
+	future := now.Add(time.Hour)
+	past := now.Add(-time.Hour)
+	tests := []struct {
+		name    string
+		request BulkRequest
+		post    ScheduledPost
+		want    SkipReason
+	}{
+		{"delete draft", BulkRequest{Action: BulkDelete}, ScheduledPost{Status: StatusDraft}, ""},
+		{"delete posted", BulkRequest{Action: BulkDelete}, ScheduledPost{Status: StatusPosted}, ""},
+		{"delete posting", BulkRequest{Action: BulkDelete}, ScheduledPost{Status: StatusPosting}, SkipWrongStatus},
+		{"pause scheduled", BulkRequest{Action: BulkPause}, ScheduledPost{Status: StatusScheduled, ScheduledAt: &future}, ""},
+		{"pause overdue scheduled", BulkRequest{Action: BulkPause}, ScheduledPost{Status: StatusScheduled, ScheduledAt: &past}, ""},
+		{"pause paused", BulkRequest{Action: BulkPause}, ScheduledPost{Status: StatusPaused, ScheduledAt: &future}, SkipWrongStatus},
+		{"pause draft", BulkRequest{Action: BulkPause}, ScheduledPost{Status: StatusDraft}, SkipWrongStatus},
+		{"resume paused future", BulkRequest{Action: BulkResume}, ScheduledPost{Status: StatusPaused, ScheduledAt: &future}, ""},
+		{"resume paused overdue", BulkRequest{Action: BulkResume}, ScheduledPost{Status: StatusPaused, ScheduledAt: &past}, SkipOverdue},
+		{"resume scheduled", BulkRequest{Action: BulkResume}, ScheduledPost{Status: StatusScheduled, ScheduledAt: &future}, SkipWrongStatus},
+		{"delay scheduled", BulkRequest{Action: BulkDelay, Delay: time.Hour}, ScheduledPost{Status: StatusScheduled, ScheduledAt: &future}, ""},
+		{"delay paused", BulkRequest{Action: BulkDelay, Delay: time.Hour}, ScheduledPost{Status: StatusPaused, ScheduledAt: &future}, ""},
+		{"delay overdue still past", BulkRequest{Action: BulkDelay, Delay: time.Minute}, ScheduledPost{Status: StatusScheduled, ScheduledAt: &past}, SkipOverdue},
+		{"delay overdue into future", BulkRequest{Action: BulkDelay, Delay: 3 * time.Hour}, ScheduledPost{Status: StatusScheduled, ScheduledAt: &past}, ""},
+		{"delay draft", BulkRequest{Action: BulkDelay, Delay: time.Hour}, ScheduledPost{Status: StatusDraft}, SkipWrongStatus},
+		{"delay posting", BulkRequest{Action: BulkDelay, Delay: time.Hour}, ScheduledPost{Status: StatusPosting, ScheduledAt: &future}, SkipWrongStatus},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			skip, ok := CheckBulk(test.request, test.post, now)
+			if ok != (test.want == "") || skip.Reason != test.want {
+				t.Errorf("CheckBulk() = (%q, %v), want reason %q", skip.Reason, ok, test.want)
+			}
+		})
+	}
+}
