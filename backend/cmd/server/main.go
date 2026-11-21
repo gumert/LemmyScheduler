@@ -14,6 +14,8 @@ import (
 	"github.com/gumert/LemmyScheduler/backend/internal/api"
 	"github.com/gumert/LemmyScheduler/backend/internal/db"
 	"github.com/gumert/LemmyScheduler/backend/internal/gen/lemmyscheduler/v1/lemmyschedulerv1connect"
+	"github.com/gumert/LemmyScheduler/backend/internal/lemmyaccount"
+	"github.com/gumert/LemmyScheduler/backend/internal/lemmyclient"
 	"github.com/gumert/LemmyScheduler/backend/internal/scheduledposts"
 )
 
@@ -23,12 +25,14 @@ type store interface {
 	Close()
 	ScheduledPosts() scheduledposts.Store
 	Images() scheduledposts.ImageStore
+	LemmyAccount() lemmyaccount.Store
 }
 
 type openedStore struct {
 	close          func()
 	scheduledPosts scheduledposts.Store
 	images         scheduledposts.ImageStore
+	lemmyAccount   lemmyaccount.Store
 }
 
 func (s openedStore) Close() {
@@ -41,6 +45,10 @@ func (s openedStore) ScheduledPosts() scheduledposts.Store {
 
 func (s openedStore) Images() scheduledposts.ImageStore {
 	return s.images
+}
+
+func (s openedStore) LemmyAccount() lemmyaccount.Store {
+	return s.lemmyAccount
 }
 
 // deps are the database operations run needs, injected so tests can fake them.
@@ -61,7 +69,7 @@ func realDeps() deps {
 				// Return an untyped nil, not a nil *pgxpool.Pool in a non-nil interface.
 				return nil, err
 			}
-			return openedStore{close: pool.Close, scheduledPosts: db.NewScheduledPostStore(pool), images: db.NewImageStore(pool)}, nil
+			return openedStore{close: pool.Close, scheduledPosts: db.NewScheduledPostStore(pool), images: db.NewImageStore(pool), lemmyAccount: db.NewLemmyAccountStore(pool)}, nil
 		},
 	}
 }
@@ -107,7 +115,7 @@ func run(ctx context.Context, addr string, getenv func(string) string, d deps) e
 	// also when the server fails to start.
 	defer st.Close()
 
-	srv := newServer(addr, getenv, st.ScheduledPosts(), st.Images())
+	srv := newServer(addr, getenv, st.ScheduledPosts(), st.Images(), st.LemmyAccount())
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -128,10 +136,10 @@ func run(ctx context.Context, addr string, getenv func(string) string, d deps) e
 
 // newServer builds the HTTP server with explicit timeouts so slow or stalled
 // clients cannot hold connections open indefinitely.
-func newServer(addr string, getenv func(string) string, scheduledPostStore scheduledposts.Store, imageStore scheduledposts.ImageStore) *http.Server {
+func newServer(addr string, getenv func(string) string, scheduledPostStore scheduledposts.Store, imageStore scheduledposts.ImageStore, accountStore lemmyaccount.Store) *http.Server {
 	return &http.Server{
 		Addr:              addr,
-		Handler:           newMux(getenv, scheduledPostStore, imageStore),
+		Handler:           newMux(getenv, scheduledPostStore, imageStore, accountStore),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
@@ -141,13 +149,15 @@ func newServer(addr string, getenv func(string) string, scheduledPostStore sched
 
 // newMux registers every route the backend serves. Keeping this separate from
 // main lets tests exercise routing and method matching.
-func newMux(getenv func(string) string, scheduledPostStore scheduledposts.Store, imageStore scheduledposts.ImageStore) *http.ServeMux {
+func newMux(getenv func(string) string, scheduledPostStore scheduledposts.Store, imageStore scheduledposts.ImageStore, accountStore lemmyaccount.Store) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthHandler)
 
 	path, handler := lemmyschedulerv1connect.NewPingServiceHandler(api.PingServer{})
 	mux.Handle(path, api.CORS(api.CORSAllowedOrigin(getenv), handler))
 	path, handler = lemmyschedulerv1connect.NewScheduledPostServiceHandler(api.NewScheduledPostServer(scheduledPostStore))
+	mux.Handle(path, api.CORS(api.CORSAllowedOrigin(getenv), handler))
+	path, handler = lemmyschedulerv1connect.NewLemmyAccountServiceHandler(api.NewLemmyAccountServer(accountStore, lemmyclient.New(accountStore, nil)))
 	mux.Handle(path, api.CORS(api.CORSAllowedOrigin(getenv), handler))
 	mux.Handle("/scheduled-posts/", api.CORS(api.CORSAllowedOrigin(getenv), api.NewImageServer(imageStore).Handler()))
 	return mux

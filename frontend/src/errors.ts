@@ -57,3 +57,26 @@ export function describeImageStatus(status: number): string {
       return `Image request failed (HTTP ${status}).`;
   }
 }
+
+// Account errors carry the backend's own explanation (fixed text, never a raw
+// Lemmy response), so it is shown as is. Only transport failures get local text.
+export function describeAccountError(err: unknown): string {
+  if (err instanceof ConnectError) {
+    switch (err.code) {
+      case Code.DeadlineExceeded:
+      case Code.Canceled:
+        return "The request timed out. Check that the backend is running and try again.";
+      case Code.Unavailable:
+        return err.rawMessage.startsWith("The instance") ? err.rawMessage : "The backend is unreachable.";
+      default:
+        return err.rawMessage;
+    }
+  }
+  return err instanceof Error ? err.message : String(err);
+}
+
+// Community suggestions are optional, so every failure means "no suggestions".
+// Only a missing account is worth telling the user about.
+export function isNoAccountError(err: unknown): boolean {
+  return err instanceof ConnectError && err.code === Code.NotFound;
+}

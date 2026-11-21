@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package lemmyscheduler.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// LemmyAccountService manages the single Lemmy account posts are published
+// with. The password is write-only: no response ever contains it.
+service LemmyAccountService {
+  // SetAccount logs in with the submitted values and checks the instance
+  // version, then saves them. On failure the stored account is unchanged.
+  rpc SetAccount(SetAccountRequest) returns (SetAccountResponse);
+  // GetAccountStatus returns the stored account without its password.
+  rpc GetAccountStatus(GetAccountStatusRequest) returns (GetAccountStatusResponse);
+  // ListCommunities returns the communities the account follows. It fails with
+  // NOT_FOUND when no account is configured and UNAVAILABLE when the instance
+  // cannot be reached.
+  rpc ListCommunities(ListCommunitiesRequest) returns (ListCommunitiesResponse);
+}
+
+message SetAccountRequest {
+  string instance_url = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message SetAccountResponse {
+  AccountStatus status = 1;
+}
+
+message GetAccountStatusRequest {}
+
+message GetAccountStatusResponse {
+  AccountStatus status = 1;
+}
+
+message AccountStatus {
+  bool configured = 1;
+  string instance_url = 2;
+  string username = 3;
+  // Result of the latest login attempt, including automatic re-logins.
+  bool last_login_ok = 4;
+  // Empty when the last login succeeded.
+  string last_login_error = 5;
+  google.protobuf.Timestamp last_login_at = 6;
+}
+
+message ListCommunitiesRequest {}
+
+message ListCommunitiesResponse {
+  repeated Community communities = 1;
+}
+
+message Community {
+  // Qualified as name@instance.
+  string name = 1;
+  string title = 2;
+}

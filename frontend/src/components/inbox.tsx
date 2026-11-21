@@ -41,9 +41,14 @@ export function Inbox() {
             History
           </TabButton>
         </div>
-        <Link href="/posts/new" className="button primary">
-          New post
-        </Link>
+        <span className="inline">
+          <Link href="/settings" className="button">
+            Settings
+          </Link>
+          <Link href="/posts/new" className="button primary">
+            New post
+          </Link>
+        </span>
       </div>
       <p className="muted">Times are shown in {localZoneName()}.</p>
       <PostList key={tab} tab={tab} />
