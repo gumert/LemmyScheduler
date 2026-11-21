@@ -2,6 +2,7 @@ import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 
 import { describeImageStatus } from "../errors";
+import { LemmyAccountService } from "../gen/lemmyscheduler/v1/lemmy_account_pb";
 import { PingService } from "../gen/lemmyscheduler/v1/ping_pb";
 import { ScheduledPostService } from "../gen/lemmyscheduler/v1/scheduled_post_pb";
 
@@ -15,6 +16,7 @@ const transport = createConnectTransport({ baseUrl: API_URL });
 
 export const pingClient = createClient(PingService, transport);
 export const scheduledPostClient = createClient(ScheduledPostService, transport);
+export const lemmyAccountClient = createClient(LemmyAccountService, transport);
 
 export class ImageRequestError extends Error {
   constructor(readonly status: number) {

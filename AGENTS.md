@@ -45,7 +45,9 @@ Posting safety rules apply to all scheduling and Lemmy code. The worst failure i
 - A global rate limit and a persisted pause (circuit breaker) apply regardless of schedule.
 - Only one poster runs at a time.
 
-Deliberate non-goals, so nobody adds them speculatively: recurring posts, multiple Lemmy accounts, 2FA-protected Lemmy accounts, remote or multi-user hosting, a durable-execution engine such as Temporal, database backups, and persisting Lemmy session tokens (the backend logs in when needed and keeps the token in memory). The Lemmy password is stored in the database in plain text: this is a single-user, locally hosted app, and the API must never return it.
+Deliberate non-goals, so nobody adds them speculatively: recurring posts, multiple Lemmy accounts, 2FA-protected Lemmy accounts, remote or multi-user hosting, a durable-execution engine such as Temporal, database backups, and persisting Lemmy session tokens (the backend logs in when needed and keeps the token in memory). The Lemmy password is stored in the database in plain text: this is a single-user, locally hosted app, and the API must never return it, and no log line or error message may contain it or a session token.
+
+The Lemmy API client lives in `backend/internal/lemmyclient`: API v3 (Lemmy 0.19) and v4 (Lemmy 1.0+), standard library only, never follows redirects, and every call has a timeout. Add an endpoint only when a handoff needs it. The single account is stored in the `lemmy_account` table behind `lemmyaccount.Store`. API findings are in [docs/lemmy-api-findings.md](docs/lemmy-api-findings.md).
 
 User-uploaded images are stored as `bytea` in their own table, capped in size, and kept out of list queries. They are uploaded to Lemmy only immediately before posting, never at draft time.
 

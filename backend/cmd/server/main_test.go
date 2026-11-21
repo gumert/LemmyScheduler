@@ -15,7 +15,7 @@ func TestMuxHealthz(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	res := httptest.NewRecorder()
 
-	newMux(noEnv, nil, nil).ServeHTTP(res, req)
+	newMux(noEnv, nil, nil, nil).ServeHTTP(res, req)
 
 	if res.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
@@ -43,7 +43,7 @@ func TestMuxRejectsUnroutedRequests(t *testing.T) {
 			req := httptest.NewRequest(tt.method, tt.path, nil)
 			res := httptest.NewRecorder()
 
-			newMux(noEnv, nil, nil).ServeHTTP(res, req)
+			newMux(noEnv, nil, nil, nil).ServeHTTP(res, req)
 
 			if res.Code != tt.want {
 				t.Fatalf("status = %d, want %d", res.Code, tt.want)
@@ -58,14 +58,14 @@ func TestImagePreflight(t *testing.T) {
 	req.Header.Set("Access-Control-Request-Method", "POST")
 	req.Header.Set("Access-Control-Request-Headers", "content-type")
 	res := httptest.NewRecorder()
-	newMux(noEnv, nil, nil).ServeHTTP(res, req)
+	newMux(noEnv, nil, nil, nil).ServeHTTP(res, req)
 	if res.Code != http.StatusNoContent || res.Header().Get("Access-Control-Allow-Origin") != "http://localhost:3000" {
 		t.Fatalf("image preflight = %d, headers %v", res.Code, res.Header())
 	}
 }
 
 func TestNewServerSetsTimeouts(t *testing.T) {
-	srv := newServer(":0", noEnv, nil, nil)
+	srv := newServer(":0", noEnv, nil, nil, nil)
 	if srv.ReadHeaderTimeout == 0 || srv.ReadTimeout == 0 || srv.WriteTimeout == 0 || srv.IdleTimeout == 0 {
 		t.Fatalf("server timeouts must all be set: %+v", srv)
 	}

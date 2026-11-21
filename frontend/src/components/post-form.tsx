@@ -27,6 +27,7 @@ import {
   timestampToLocalInput,
 } from "../time";
 import { isHttpUrl, urlProblem } from "../url";
+import { communitySuggestionLabel, useCommunitySuggestions } from "../use-community-suggestions";
 import { usePendingImage } from "../use-pending-image";
 import { BodyImageList } from "./body-image-list";
 import { BodyPreview } from "./body-preview";
@@ -83,6 +84,7 @@ export function PostForm({ initial }: { initial?: ScheduledPost }) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [imageProblem, setImageProblem] = useState("");
   const { pending: pendingTitle, choose: choosePendingTitle, clear: clearPendingTitle } = usePendingImage();
+  const { communities, noAccount } = useCommunitySuggestions();
   const busyRef = useRef(false);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
@@ -407,8 +409,19 @@ export function PostForm({ initial }: { initial?: ScheduledPost }) {
             value={fields.community}
             onChange={(e) => update("community", e.target.value)}
             placeholder="community@instance.example"
+            list="community-suggestions"
           />
+          <datalist id="community-suggestions">
+            {communities.map((community) => (
+              <option key={community.name} value={community.name} label={communitySuggestionLabel(community)} />
+            ))}
+          </datalist>
         </Field>
+        {noAccount && (
+          <p className="muted">
+            <Link href="/settings">Add your Lemmy account in Settings</Link> to get community suggestions.
+          </p>
+        )}
 
         <label className="checkbox">
           <input type="checkbox" checked={fields.nsfw} onChange={(e) => update("nsfw", e.target.checked)} /> NSFW

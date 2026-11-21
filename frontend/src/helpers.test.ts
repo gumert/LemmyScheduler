@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 
 import { bodyImageIds, orphanedImageIds, insertImageToken, removeImageToken, splitBody } from "./body-images";
-import { describeApiError, describeImageStatus, fieldErrorFor } from "./errors";
+import { describeAccountError, describeApiError, describeImageStatus, fieldErrorFor, isNoAccountError } from "./errors";
 import { checkBodyImageCount, checkImageFile, MAX_IMAGE_BYTES } from "./images";
 import { create } from "@bufbuild/protobuf";
 
@@ -12,7 +12,16 @@ import { BulkSkippedPostSchema, BulkSkipReason } from "./gen/lemmyscheduler/v1/s
 import { bodySnippet } from "./snippet";
 import { urlProblem } from "./url";
 import { defaultScheduledLocal, formatScheduledAt, localInputToTimestamp, timestampToLocalInput } from "./time";
+import { communitySuggestionLabel } from "./use-community-suggestions";
 import { Code, ConnectError } from "@connectrpc/connect";
+
+describe("community suggestions", () => {
+  it("distinguishes communities with the same title on different instances", () => {
+    expect(communitySuggestionLabel({ name: "cats@one.example", title: "Cats" })).toBe("cats@one.example — Cats");
+    expect(communitySuggestionLabel({ name: "cats@two.example", title: "Cats" })).toBe("cats@two.example — Cats");
+    expect(communitySuggestionLabel({ name: "cats@one.example", title: "" })).toBe("cats@one.example");
+  });
+});
 
 // TZ is read when the first Date is created, so it is set before any test runs.
 process.env.TZ = "America/New_York";
@@ -214,5 +223,25 @@ describe("bulk results", () => {
     ]);
     expect(groups[1].entries).toEqual([{ id: BigInt(2), title: "Post 2" }]);
     expect(summarizeBulk(3, 2)).toBe("3 updated, 2 skipped");
+  });
+});
+
+describe("account errors", () => {
+  it("treats only a missing account as worth a hint", () => {
+    expect(isNoAccountError(new ConnectError("none", Code.NotFound))).toBe(true);
+    expect(isNoAccountError(new ConnectError("down", Code.Unavailable))).toBe(false);
+    expect(isNoAccountError(new Error("network"))).toBe(false);
+  });
+
+  it("shows the backend's message and local text for transport failures", () => {
+    expect(
+      describeAccountError(new ConnectError("This instance needs Lemmy 0.19 or newer.", Code.FailedPrecondition)),
+    ).toBe("This instance needs Lemmy 0.19 or newer.");
+    expect(describeAccountError(new ConnectError("The instance is unreachable.", Code.Unavailable))).toBe(
+      "The instance is unreachable.",
+    );
+    expect(describeAccountError(new ConnectError("fetch failed", Code.Unavailable))).toBe(
+      "The backend is unreachable.",
+    );
   });
 });

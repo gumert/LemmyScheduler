@@ -35,7 +35,11 @@ tilt up
 - The backend applies the migrations in `backend/migrations/` (embedded in the binary) at startup, so the same path runs locally and when deployed. A failed or dirty migration stops the backend with an error; it never forces a version.
 - To reset the database, stop `tilt up` with Ctrl-C and run `rm -rf target/postgres`.
 - `just tilt-check` (part of `just check`) uses a temporary data directory, and needs ports 8080, 3000 and 5433 free.
-- PostgreSQL-backed scheduled-post tests create and drop a unique schema. Run them with `TEST_DATABASE_URL=postgres://lemmyscheduler@127.0.0.1:5433/lemmyscheduler?sslmode=disable just test-db` while a local database is available.
+- PostgreSQL-backed tests (scheduled posts, Lemmy account) create and drop a unique schema. Run them with `TEST_DATABASE_URL=postgres://lemmyscheduler@127.0.0.1:5433/lemmyscheduler?sslmode=disable just test-db` while a local database is available.
+
+## Lemmy account
+
+Open **Settings** in the inbox and enter your instance URL, username and password. The instance must run Lemmy 0.19 or newer (API v3 or v4), and the account must not use two-factor authentication. Saving logs in first, and a failure leaves the stored account untouched. The password is stored in plain text in the database, is never shown again, and must be re-entered on every save. The post form then suggests the communities the account follows, showing each community's name and instance. Findings about the Lemmy API are in [docs/lemmy-api-findings.md](docs/lemmy-api-findings.md).
 
 Then install the git hooks once per clone:
 
