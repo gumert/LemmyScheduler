@@ -23,13 +23,14 @@ func NewImageStore(pool *pgxpool.Pool) scheduledposts.ImageStore {
 
 type lockedPost struct {
 	body         string
+	url          string
 	titleImageID *int64
 }
 
 func lockEditablePost(ctx context.Context, tx pgx.Tx, postID int64) (lockedPost, error) {
 	var status string
 	var post lockedPost
-	err := tx.QueryRow(ctx, `SELECT status, body, title_image_id FROM scheduled_posts WHERE id = $1 FOR UPDATE`, postID).Scan(&status, &post.body, &post.titleImageID)
+	err := tx.QueryRow(ctx, `SELECT status, body, url, title_image_id FROM scheduled_posts WHERE id = $1 FOR UPDATE`, postID).Scan(&status, &post.body, &post.url, &post.titleImageID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return lockedPost{}, scheduledposts.ErrNotFound
 	}
@@ -80,6 +81,9 @@ func (s imageStore) createImage(ctx context.Context, postID int64, title bool, c
 		return scheduledposts.ImageMetadata{}, err
 	}
 	if title {
+		if post.url != "" {
+			return scheduledposts.ImageMetadata{}, &scheduledposts.ValidationError{Field: "title_image", Message: "cannot be used with a URL"}
+		}
 		if err := clearTitleImage(ctx, tx, postID, post); err != nil {
 			return scheduledposts.ImageMetadata{}, err
 		}
@@ -122,6 +126,9 @@ func (s imageStore) SelectTitleImage(ctx context.Context, postID, imageID int64)
 	post, err := lockEditablePost(ctx, tx, postID)
 	if err != nil {
 		return err
+	}
+	if post.url != "" {
+		return &scheduledposts.ValidationError{Field: "title_image", Message: "cannot be used with a URL"}
 	}
 	var exists bool
 	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM post_images WHERE scheduled_post_id = $1 AND id = $2)`, postID, imageID).Scan(&exists); err != nil {

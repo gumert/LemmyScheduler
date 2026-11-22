@@ -55,11 +55,46 @@ type ScheduledPost struct {
 	Status       Status
 	ScheduledAt  *time.Time
 	PostedAt     *time.Time
+	LemmyPostID  int64
 	LemmyPostURL string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	TitleImage   *ImageMetadata
 	Images       []ImageMetadata
+}
+
+type AttemptOutcome string
+
+const (
+	AttemptStarted            AttemptOutcome = "started"
+	AttemptPosted             AttemptOutcome = "posted"
+	AttemptNeedsReview        AttemptOutcome = "needs_review"
+	AttemptRecoveredOnStartup AttemptOutcome = "recovered_on_startup"
+)
+
+type Attempt struct {
+	ID         int64
+	PostID     int64
+	Title      string
+	StartedAt  time.Time
+	FinishedAt *time.Time
+	Outcome    AttemptOutcome
+	Message    string
+}
+
+type ClaimedPost struct {
+	Post      ScheduledPost
+	AttemptID int64
+}
+
+type FinalizeAttempt struct {
+	PostID       int64
+	AttemptID    int64
+	Outcome      AttemptOutcome
+	Message      string // Safe-to-show text; never pass raw client errors or secrets.
+	FinishedAt   time.Time
+	LemmyPostID  int64
+	LemmyPostURL string
 }
 
 type Cursor struct {
@@ -87,9 +122,16 @@ type Store interface {
 	BulkUpdate(context.Context, BulkRequest) (BulkResult, error)
 }
 
+// SchedulerStore exposes scheduler-only writes. Implementations must serialize
+// these operations through the process's publisher-ownership session.
+type SchedulerStore interface {
+	ClaimDue(context.Context, time.Time) (ClaimedPost, bool, error)
+	FinalizeAttempt(context.Context, FinalizeAttempt) error
+}
+
 func CanEdit(status Status) bool {
 	switch status {
-	case StatusDraft, StatusScheduled, StatusPaused, StatusFailed:
+	case StatusDraft, StatusScheduled, StatusPaused:
 		return true
 	default:
 		return false
@@ -136,11 +178,7 @@ func ValidateUpdate(current, candidate ScheduledPost, now time.Time) error {
 	if !CanEdit(current.Status) {
 		return ErrNotEditable
 	}
-	if current.Status == StatusFailed {
-		if candidate.Status != StatusFailed {
-			return invalid("status", "cannot transition from failed")
-		}
-	} else if !CanTransition(current.Status, candidate.Status) {
+	if !CanTransition(current.Status, candidate.Status) {
 		return invalid("status", "transition is not allowed")
 	}
 	if err := validateFields(candidate); err != nil {
@@ -175,6 +213,9 @@ func validateFields(post ScheduledPost) error {
 		return invalid("body", fmt.Sprintf("must reference at most %d distinct images", MaxBodyImages))
 	}
 	if post.URL != "" {
+		if post.TitleImage != nil {
+			return invalid("url", "cannot be used with a title image")
+		}
 		u, err := url.Parse(post.URL)
 		if err != nil || (!strings.EqualFold(u.Scheme, "http") && !strings.EqualFold(u.Scheme, "https")) || u.Host == "" || u.Opaque != "" {
 			return invalid("url", "must be an absolute http or https URL")

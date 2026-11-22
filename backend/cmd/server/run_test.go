@@ -36,6 +36,42 @@ func (s fakeStore) Close() {
 func (fakeStore) ScheduledPosts() scheduledposts.Store { return nil }
 func (fakeStore) Images() scheduledposts.ImageStore    { return nil }
 func (fakeStore) LemmyAccount() lemmyaccount.Store     { return nil }
+func (s fakeStore) AcquirePublisher(context.Context) (publisher, error) {
+	s.f.calls = append(s.f.calls, "publisher")
+	if s.f.acquireErr != nil {
+		return nil, s.f.acquireErr
+	}
+	return fakePublisher{f: s.f, lost: make(chan error)}, nil
+}
+
+type fakePublisher struct {
+	f    *fakeDeps
+	lost chan error
+}
+
+func (p fakePublisher) ClaimDue(context.Context, time.Time) (scheduledposts.ClaimedPost, bool, error) {
+	return scheduledposts.ClaimedPost{}, false, nil
+}
+func (p fakePublisher) FinalizeAttempt(context.Context, scheduledposts.FinalizeAttempt) error {
+	return nil
+}
+func (p fakePublisher) RecoverInterrupted(context.Context, time.Time) ([]int64, error) {
+	p.f.calls = append(p.f.calls, "recover")
+	return nil, nil
+}
+func (p fakePublisher) Check(context.Context) error {
+	if p.f.checkErr != nil {
+		p.lost <- p.f.checkErr
+		close(p.lost)
+		return p.f.checkErr
+	}
+	return nil
+}
+func (p fakePublisher) Lost() <-chan error { return p.lost }
+func (p fakePublisher) Close() error {
+	p.f.calls = append(p.f.calls, "publisher-close")
+	return nil
+}
 
 // fakeDeps records the order of calls and the URLs they received. run calls
 // every method on its own goroutine, so tests read the fields only after run
@@ -46,6 +82,8 @@ type fakeDeps struct {
 	openURL    string
 	migrateErr error
 	openErr    error
+	acquireErr error
+	checkErr   error
 	onMigrate  func()
 	onOpen     func()
 	onClose    func()
@@ -173,7 +211,7 @@ func TestRunMigratesThenOpensThenListens(t *testing.T) {
 		t.Fatalf("run() = %v, want nil", err)
 	}
 
-	if want := []string{"migrate", "open", "close"}; !slices.Equal(f.calls, want) {
+	if want := []string{"migrate", "open", "publisher", "recover", "publisher-close", "close"}; !slices.Equal(f.calls, want) {
 		t.Fatalf("calls = %v, want %v", f.calls, want)
 	}
 	if listeningDuringMigrate || listeningDuringOpen {
@@ -229,7 +267,7 @@ func TestRunClosesStoreAfterServerShutsDown(t *testing.T) {
 		t.Fatalf("run() = %v, want nil", err)
 	}
 
-	if want := []string{"migrate", "open", "close"}; !slices.Equal(f.calls, want) {
+	if want := []string{"migrate", "open", "publisher", "recover", "publisher-close", "close"}; !slices.Equal(f.calls, want) {
 		t.Fatalf("calls = %v, want %v", f.calls, want)
 	}
 	if listeningAtClose {
@@ -251,7 +289,44 @@ func TestRunClosesStoreWhenServerFailsToStart(t *testing.T) {
 	if err == nil {
 		t.Fatal("run() = nil, want a listen error")
 	}
-	if want := []string{"migrate", "open", "close"}; !slices.Equal(f.calls, want) {
+	if want := []string{"migrate", "open", "publisher", "recover", "publisher-close", "close"}; !slices.Equal(f.calls, want) {
+		t.Fatalf("calls = %v, want %v", f.calls, want)
+	}
+}
+
+// SAFETY TEST: startup cannot recover or serve when publisher ownership is unavailable.
+func TestRunOwnershipFailureAbortsBeforeRecovery(t *testing.T) {
+	addr := freeAddr(t)
+	cause := errors.New("publisher already active")
+	f := &fakeDeps{acquireErr: cause}
+	err := run(context.Background(), addr, testEnv, f.deps())
+	if !errors.Is(err, cause) {
+		t.Fatalf("run() = %v, want ownership error", err)
+	}
+	if want := []string{"migrate", "open", "publisher", "close"}; !slices.Equal(f.calls, want) {
+		t.Fatalf("calls = %v, want %v", f.calls, want)
+	}
+	if listening(addr) {
+		t.Fatal("server listened without publisher ownership")
+	}
+}
+
+// SAFETY TEST: losing the publisher session shuts down the server and returns a fatal error.
+func TestRunStopsWhenPublisherOwnershipIsLost(t *testing.T) {
+	addr := freeAddr(t)
+	cause := errors.New("publisher connection was lost")
+	f := &fakeDeps{checkErr: cause}
+	done, cancel := startRun(addr, testEnv, f.deps())
+	defer cancel()
+	waitListening(t, addr)
+	err := waitDone(t, done)
+	if !errors.Is(err, cause) {
+		t.Fatalf("run() = %v, want wrapped ownership error", err)
+	}
+	if listening(addr) {
+		t.Fatal("server kept listening after publisher ownership loss")
+	}
+	if want := []string{"migrate", "open", "publisher", "recover", "publisher-close", "close"}; !slices.Equal(f.calls, want) {
 		t.Fatalf("calls = %v, want %v", f.calls, want)
 	}
 }

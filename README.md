@@ -33,6 +33,15 @@ tilt up
 - Authentication is `trust` and the server listens on loopback only, so there is no password to manage. Do not expose this instance beyond your machine.
 - The major version is pinned in [flake.nix](flake.nix). A data directory only opens with the version that created it, so changing the pin needs `pg_upgrade` or a reset.
 - The backend applies the migrations in `backend/migrations/` (embedded in the binary) at startup, so the same path runs locally and when deployed. A failed or dirty migration stops the backend with an error; it never forces a version.
+- Before upgrading to scheduler safety migration 0005, stop all backend instances and check for legacy posts that have both a URL and title image:
+
+  ```sql
+  SELECT id FROM scheduled_posts WHERE url <> '' AND title_image_id IS NOT NULL ORDER BY id;
+  ```
+
+  Deliberately keep one field per listed row before retrying: set `title_image_id = NULL` to keep its URL, or set `url = ''` to keep its title image. Do not remove either field automatically; migration 0005 installs a validated database constraint and fails if any conflict remains.
+- If migration 0005 fails, keep every server stopped. Inspect `schema_migrations`, confirm version 5 is dirty, and verify its transaction rolled back completely (no `post_attempts` table, account-state columns, or URL/title-image constraint). Repair each conflicting row as above, then deliberately restore version 4 with the supported golang-migrate CLI: `migrate -path backend/migrations -database "$DATABASE_URL" force 4`. Only then restart the backend to retry the migration. Never force a version without verifying the rollback and never let a server run against a partially upgraded schema.
+- A scheduled post receives at most one automatic publish attempt. Interrupted or unsuccessful attempts end in `needs_review`; inspect the post and its attempt history before any manual recovery.
 - To reset the database, stop `tilt up` with Ctrl-C and run `rm -rf target/postgres`.
 - `just tilt-check` (part of `just check`) uses a temporary data directory, and needs ports 8080, 3000 and 5433 free.
 - PostgreSQL-backed tests (scheduled posts, Lemmy account) create and drop a unique schema. Run them with `TEST_DATABASE_URL=postgres://lemmyscheduler@127.0.0.1:5433/lemmyscheduler?sslmode=disable just test-db` while a local database is available.

@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/gumert/LemmyScheduler/backend/internal/api"
 	"github.com/gumert/LemmyScheduler/backend/internal/db"
 	"github.com/gumert/LemmyScheduler/backend/internal/gen/lemmyscheduler/v1/lemmyschedulerv1connect"
@@ -23,13 +25,23 @@ import (
 // interface so tests can substitute a fake.
 type store interface {
 	Close()
+	AcquirePublisher(context.Context) (publisher, error)
 	ScheduledPosts() scheduledposts.Store
 	Images() scheduledposts.ImageStore
 	LemmyAccount() lemmyaccount.Store
 }
 
+type publisher interface {
+	scheduledposts.SchedulerStore
+	RecoverInterrupted(context.Context, time.Time) ([]int64, error)
+	Check(context.Context) error
+	Lost() <-chan error
+	Close() error
+}
+
 type openedStore struct {
 	close          func()
+	pool           *pgxpool.Pool
 	scheduledPosts scheduledposts.Store
 	images         scheduledposts.ImageStore
 	lemmyAccount   lemmyaccount.Store
@@ -37,6 +49,10 @@ type openedStore struct {
 
 func (s openedStore) Close() {
 	s.close()
+}
+
+func (s openedStore) AcquirePublisher(ctx context.Context) (publisher, error) {
+	return db.AcquirePublisher(ctx, s.pool)
 }
 
 func (s openedStore) ScheduledPosts() scheduledposts.Store {
@@ -69,7 +85,7 @@ func realDeps() deps {
 				// Return an untyped nil, not a nil *pgxpool.Pool in a non-nil interface.
 				return nil, err
 			}
-			return openedStore{close: pool.Close, scheduledPosts: db.NewScheduledPostStore(pool), images: db.NewImageStore(pool), lemmyAccount: db.NewLemmyAccountStore(pool)}, nil
+			return openedStore{close: pool.Close, pool: pool, scheduledPosts: db.NewScheduledPostStore(pool), images: db.NewImageStore(pool), lemmyAccount: db.NewLemmyAccountStore(pool)}, nil
 		},
 	}
 }
@@ -99,7 +115,7 @@ func databaseURL(getenv func(string) string) (string, error) {
 // before returning. The server only starts listening after migrations succeed,
 // so a passing readiness probe implies the schema is current. It returns nil
 // on a clean shutdown.
-func run(ctx context.Context, addr string, getenv func(string) string, d deps) error {
+func run(ctx context.Context, addr string, getenv func(string) string, d deps) (runErr error) {
 	dsn, err := databaseURL(getenv)
 	if err != nil {
 		return err
@@ -115,6 +131,27 @@ func run(ctx context.Context, addr string, getenv func(string) string, d deps) e
 	// also when the server fails to start.
 	defer st.Close()
 
+	owner, err := st.AcquirePublisher(ctx)
+	if err != nil {
+		return fmt.Errorf("acquire publisher ownership: %w", err)
+	}
+	defer func() {
+		if err := owner.Close(); err != nil {
+			if runErr == nil {
+				runErr = fmt.Errorf("release publisher ownership: %w", err)
+			} else {
+				log.Printf("release publisher ownership: %v", err)
+			}
+		}
+	}()
+	recovered, err := owner.RecoverInterrupted(ctx, time.Now().UTC())
+	if err != nil {
+		return fmt.Errorf("recover interrupted posts: %w", err)
+	}
+	if len(recovered) > 0 {
+		log.Printf("recovered %d interrupted post(s), ids=%v", len(recovered), recovered)
+	}
+
 	srv := newServer(addr, getenv, st.ScheduledPosts(), st.Images(), st.LemmyAccount())
 
 	errCh := make(chan error, 1)
@@ -123,15 +160,59 @@ func run(ctx context.Context, addr string, getenv func(string) string, d deps) e
 		errCh <- srv.ListenAndServe()
 	}()
 
+	monitorCtx, stopMonitor := context.WithCancel(context.Background())
+	monitorDone := make(chan struct{})
+	go func() {
+		defer close(monitorDone)
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-monitorCtx.Done():
+				return
+			case <-ticker.C:
+				checkCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				err := owner.Check(checkCtx)
+				cancel()
+				if err != nil {
+					return
+				}
+			}
+		}
+	}()
+	defer func() {
+		stopMonitor()
+		<-monitorDone
+	}()
+
 	select {
 	case err := <-errCh:
 		return err
+	case err := <-owner.Lost():
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if shutdownErr := srv.Shutdown(shutdownCtx); shutdownErr != nil {
+			stopMonitor()
+			<-monitorDone
+			return fmt.Errorf("publisher ownership lost (%v); server shutdown: %w", err, shutdownErr)
+		}
+		stopMonitor()
+		<-monitorDone
+		return fmt.Errorf("publisher ownership lost: %w", err)
 	case <-ctx.Done():
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	return srv.Shutdown(shutdownCtx)
+	shutdownErr := srv.Shutdown(shutdownCtx)
+	stopMonitor()
+	<-monitorDone
+	select {
+	case err := <-owner.Lost():
+		return fmt.Errorf("publisher ownership lost during shutdown: %w", err)
+	default:
+	}
+	return shutdownErr
 }
 
 // newServer builds the HTTP server with explicit timeouts so slow or stalled

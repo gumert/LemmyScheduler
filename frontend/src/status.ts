@@ -52,8 +52,7 @@ export function isEditable(status: ScheduledPostStatus): boolean {
   return (
     status === ScheduledPostStatus.DRAFT ||
     status === ScheduledPostStatus.SCHEDULED ||
-    status === ScheduledPostStatus.PAUSED ||
-    status === ScheduledPostStatus.FAILED
+    status === ScheduledPostStatus.PAUSED
   );
 }
 
@@ -63,6 +62,8 @@ export function readOnlyReason(status: ScheduledPostStatus): string {
       return "This post is being published right now and can't be changed.";
     case ScheduledPostStatus.POSTED:
       return "This post has been published and can't be changed.";
+    case ScheduledPostStatus.FAILED:
+      return "This post failed to publish and can't be changed.";
     case ScheduledPostStatus.NEEDS_REVIEW:
       return "This post needs review before it can be changed.";
     default:

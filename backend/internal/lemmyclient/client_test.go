@@ -34,12 +34,14 @@ func (s *fakeStore) Save(context.Context, lemmyaccount.Account, lemmyaccount.Log
 	return nil
 }
 
-func (s *fakeStore) RecordLogin(_ context.Context, r lemmyaccount.LoginResult) error {
+func (s *fakeStore) RecordLogin(_ context.Context, _ int64, r lemmyaccount.LoginResult) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.results = append(s.results, r)
 	return nil
 }
+func (s *fakeStore) SetQueuePausedUntil(context.Context, time.Time) error { return nil }
+func (s *fakeStore) ClearQueuePausedUntil(context.Context) error          { return nil }
 
 func (s *fakeStore) lastResult(t *testing.T) lemmyaccount.LoginResult {
 	t.Helper()
@@ -220,6 +222,7 @@ func TestValidateTimesOut(t *testing.T) {
 	}
 }
 
+// SAFETY TEST: login never follows a redirect, so credentials cannot reach another host.
 func TestLoginDoesNotFollowRedirects(t *testing.T) {
 	var hit atomic.Bool
 	other := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hit.Store(true) }))
@@ -270,6 +273,7 @@ func TestReloginOnceOnUnauthorized(t *testing.T) {
 	}
 }
 
+// SAFETY TEST: a persistent 401 triggers one re-login and one retry, never a loop.
 func TestPersistent401IsNotRetriedForever(t *testing.T) {
 	c, l, _, _ := setup(t)
 	ctx := context.Background()
@@ -289,6 +293,7 @@ func TestPersistent401IsNotRetriedForever(t *testing.T) {
 	}
 }
 
+// SAFETY TEST: a lazy bad-credential login is recorded as authentication failure without leaking secrets.
 func TestFailedLazyLoginIsRecorded(t *testing.T) {
 	c, _, store, _ := setup(t)
 	store.status.Account.Password = "changed"
@@ -296,11 +301,38 @@ func TestFailedLazyLoginIsRecorded(t *testing.T) {
 		t.Fatalf("got %v", err)
 	}
 	r := store.lastResult(t)
-	if r.OK || r.Error == "" {
+	if r.OK || !r.AuthFailed || r.Error == "" {
 		t.Fatalf("login result = %+v", r)
 	}
 	if strings.Contains(r.Error, "changed") || strings.Contains(r.Error, secretPassword) {
 		t.Fatalf("recorded error leaks the password: %q", r.Error)
+	}
+}
+
+// SAFETY TEST: a lazy version-probe failure is recorded without marking credentials invalid.
+func TestLazyVersionProbeFailureIsRecorded(t *testing.T) {
+	c, l, store, _ := setup(t)
+	l.version = ""
+	if _, err := c.FollowedCommunities(context.Background()); !errors.Is(err, ErrUnsupportedVersion) {
+		t.Fatalf("got %v, want unsupported-version error", err)
+	}
+	result := store.lastResult(t)
+	if result.OK || result.AuthFailed || result.Error == "" {
+		t.Fatalf("version probe result = %+v", result)
+	}
+}
+
+// SAFETY TEST: unsupported two-factor login marks authentication as failed.
+func TestLazyTwoFactorFailureMarksAuthenticationFailed(t *testing.T) {
+	c, l, store, _ := setup(t)
+	l.loginStatus = http.StatusBadRequest
+	l.loginBody = `{"error":"missing_totp_token"}`
+	if _, err := c.FollowedCommunities(context.Background()); !errors.Is(err, ErrTwoFactorUnsupported) {
+		t.Fatalf("got %v, want unsupported-two-factor error", err)
+	}
+	result := store.lastResult(t)
+	if result.OK || !result.AuthFailed {
+		t.Fatalf("two-factor login result = %+v", result)
 	}
 }
 
@@ -436,6 +468,7 @@ func TestVersionDetectionDoesNotFallbackOnServerFailure(t *testing.T) {
 	}
 }
 
+// SAFETY TEST: credentials are never sent to an instance whose version is unsupported.
 func TestV3UnsupportedVersionDoesNotSendCredentials(t *testing.T) {
 	var loginCalls atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -515,6 +548,7 @@ func TestAccountChangeRedetectsVersion(t *testing.T) {
 	}
 }
 
+// SAFETY TEST: no client error contains the password or a token.
 func TestErrorsNeverContainSecrets(t *testing.T) {
 	c, l, _, account := setup(t)
 	l.loginStatus = http.StatusBadRequest
