@@ -57,7 +57,10 @@ func TestScheduledPostStorePostgres(t *testing.T) {
 	}
 	defer pool.Close()
 
-	for _, name := range []string{"0001_initial.up.sql", "0002_scheduled_posts.up.sql", "0003_post_images.up.sql"} {
+	for _, name := range []string{
+		"0001_initial.up.sql", "0002_scheduled_posts.up.sql", "0003_post_images.up.sql",
+		"0004_lemmy_account.up.sql", "0005_scheduler_safety.up.sql",
+	} {
 		migration, err := migrations.FS.ReadFile(name)
 		if err != nil {
 			t.Fatalf("read migration %s: %v", name, err)
@@ -125,6 +128,7 @@ func TestScheduledPostStorePostgres(t *testing.T) {
 	if len(statusFiltered) != 1 || statusFiltered[0].ID != draft.ID {
 		t.Fatalf("status-filtered list = %+v, want only draft %d", statusFiltered, draft.ID)
 	}
+	// SAFETY TEST: a row claimed by the scheduler (posting) cannot be updated by a user.
 	if _, err := pool.Exec(ctx, `UPDATE scheduled_posts SET status = 'posting' WHERE id = $1`, draft.ID); err != nil {
 		t.Fatalf("simulate scheduler claim: %v", err)
 	}
@@ -465,6 +469,7 @@ func TestScheduledPostStorePostgres(t *testing.T) {
 			}
 		})
 
+		// SAFETY TEST: resuming never revives an overdue post, so nothing is burst-posted.
 		t.Run("resume skips overdue", func(t *testing.T) {
 			okID := create(scheduledposts.StatusPaused, &soon)
 			overdueID := create(scheduledposts.StatusPaused, &past)
@@ -519,6 +524,7 @@ func TestScheduledPostStorePostgres(t *testing.T) {
 			}
 		})
 
+		// SAFETY TEST: no bulk action can change or delete a posting row.
 		t.Run("posting rows are untouched", func(t *testing.T) {
 			for _, request := range []scheduledposts.BulkRequest{
 				{Action: scheduledposts.BulkDelete}, {Action: scheduledposts.BulkPause},

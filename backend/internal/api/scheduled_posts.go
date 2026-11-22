@@ -132,6 +132,7 @@ func (s *ScheduledPostServer) UpdateScheduledPost(ctx context.Context, req *conn
 		return nil, invalidArgument(err.Error())
 	}
 	candidate.ID = current.ID
+	candidate.TitleImage = current.TitleImage
 	candidate.PostedAt = current.PostedAt
 	candidate.LemmyPostURL = current.LemmyPostURL
 	candidate.CreatedAt = current.CreatedAt

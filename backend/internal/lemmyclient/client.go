@@ -218,18 +218,22 @@ func classifyLoginError(err error) error {
 
 // recordLogin stores the outcome of a login attempt. A failure to record is
 // logged, not returned: it must not mask the login result.
-func (c *httpClient) recordLogin(ctx context.Context, loginErr error) {
-	result := lemmyaccount.LoginResult{OK: loginErr == nil, At: c.now().UTC()}
+func (c *httpClient) recordLogin(ctx context.Context, generation int64, loginErr error) {
+	result := lemmyaccount.LoginResult{
+		OK:         loginErr == nil,
+		AuthFailed: errors.Is(loginErr, ErrBadCredentials) || errors.Is(loginErr, ErrTwoFactorUnsupported),
+		At:         c.now().UTC(),
+	}
 	if loginErr != nil {
 		result.Error = loginErr.Error()
 	}
-	if err := c.store.RecordLogin(context.WithoutCancel(ctx), result); err != nil {
+	if err := c.store.RecordLogin(context.WithoutCancel(ctx), generation, result); err != nil {
 		log.Printf("lemmyclient: record login result: %v", err)
 	}
 }
 
 // session returns a token for account, logging in when none is cached.
-func (c *httpClient) session(ctx context.Context, account lemmyaccount.Account) (string, apiVersion, uint64, error) {
+func (c *httpClient) session(ctx context.Context, account lemmyaccount.Account, generation int64) (string, apiVersion, uint64, error) {
 	c.loginMu.Lock()
 	defer c.loginMu.Unlock()
 	c.mu.Lock()
@@ -243,10 +247,11 @@ func (c *httpClient) session(ctx context.Context, account lemmyaccount.Account) 
 	}
 	version, err := c.checkVersion(ctx, account.InstanceURL)
 	if err != nil {
+		c.recordLogin(ctx, generation, err)
 		return "", "", gen, err
 	}
 	token, err = c.login(ctx, account, version)
-	c.recordLogin(ctx, err)
+	c.recordLogin(ctx, generation, err)
 	if err != nil {
 		return "", "", gen, err
 	}
@@ -280,7 +285,7 @@ func (c *httpClient) authedGet(ctx context.Context, paths map[apiVersion]string,
 	}
 	account := status.Account
 	for attempt := 0; ; attempt++ {
-		token, version, gen, err := c.session(ctx, account)
+		token, version, gen, err := c.session(ctx, account, status.AccountGeneration)
 		if err != nil {
 			return err
 		}

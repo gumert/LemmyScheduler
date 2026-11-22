@@ -60,7 +60,7 @@ func TestToMigrateURLRejectsUnexpectedSchemes(t *testing.T) {
 	}
 }
 
-// The URL can carry a password, so no error may repeat it.
+// SAFETY TEST: the URL can carry a password, so no error may repeat it.
 func TestToMigrateURLErrorsDoNotLeakPassword(t *testing.T) {
 	tests := []string{
 		"mysql://user:hunter2@localhost/app",

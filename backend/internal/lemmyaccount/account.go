@@ -25,14 +25,18 @@ type Account struct {
 // LoginResult is the outcome of the latest login attempt. Error is a message
 // safe to show to the user; it never contains a password or token.
 type LoginResult struct {
-	OK    bool
-	Error string
-	At    time.Time
+	OK         bool
+	AuthFailed bool
+	Error      string
+	At         time.Time
 }
 
 type Status struct {
-	Account   Account
-	LastLogin LoginResult
+	Account           Account
+	LastLogin         LoginResult
+	AccountGeneration int64
+	QueuePausedUntil  *time.Time
+	AuthFailed        bool
 }
 
 // Store persists the singleton account.
@@ -41,9 +45,11 @@ type Store interface {
 	Get(ctx context.Context) (Status, error)
 	// Save replaces the account and records result as its latest login.
 	Save(ctx context.Context, account Account, result LoginResult) error
-	// RecordLogin updates the latest login result. It does nothing when no
-	// account is saved.
-	RecordLogin(ctx context.Context, result LoginResult) error
+	// RecordLogin updates the latest login result only if the account identity
+	// still matches the one used for login.
+	RecordLogin(ctx context.Context, generation int64, result LoginResult) error
+	SetQueuePausedUntil(ctx context.Context, until time.Time) error
+	ClearQueuePausedUntil(ctx context.Context) error
 }
 
 // NormalizeInstanceURL requires an http or https scheme and a host, rejects

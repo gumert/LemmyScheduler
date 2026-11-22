@@ -34,7 +34,11 @@ func (s *fakeAccountStore) Save(_ context.Context, a lemmyaccount.Account, r lem
 	return nil
 }
 
-func (s *fakeAccountStore) RecordLogin(context.Context, lemmyaccount.LoginResult) error { return nil }
+func (s *fakeAccountStore) RecordLogin(context.Context, int64, lemmyaccount.LoginResult) error {
+	return nil
+}
+func (s *fakeAccountStore) SetQueuePausedUntil(context.Context, time.Time) error { return nil }
+func (s *fakeAccountStore) ClearQueuePausedUntil(context.Context) error          { return nil }
 
 type fakeLemmy struct {
 	validateErr error
@@ -94,6 +98,7 @@ func TestSetAccountSavesAfterValidation(t *testing.T) {
 	}
 }
 
+// SAFETY TEST: a failed validation never overwrites the saved account.
 func TestSetAccountFailureLeavesRowUntouched(t *testing.T) {
 	old := lemmyaccount.Status{Account: lemmyaccount.Account{InstanceURL: "https://old.test", Username: "old", Password: "oldpw"}}
 	cases := map[string]struct {
@@ -228,7 +233,7 @@ func TestGetAccountStatus(t *testing.T) {
 	}
 }
 
-// The password must not appear in any response, error or log line.
+// SAFETY TEST: the password must not appear in any response, error or log line.
 func TestPasswordNeverLeaks(t *testing.T) {
 	var logs bytes.Buffer
 	log.SetOutput(&logs)

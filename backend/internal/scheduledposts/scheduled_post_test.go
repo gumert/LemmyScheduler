@@ -53,6 +53,26 @@ func TestValidateCreate(t *testing.T) {
 	}
 }
 
+// SAFETY TEST: server validation rejects a URL and title image together on create and update.
+func TestURLAndTitleImageExclusiveValidation(t *testing.T) {
+	now := time.Now().UTC()
+	create := validPost()
+	create.URL = "https://example.test/article"
+	create.TitleImage = &ImageMetadata{ID: 1}
+	var validationErr *ValidationError
+	if err := ValidateCreate(create, now); !errors.As(err, &validationErr) || validationErr.Field != "url" {
+		t.Fatalf("create conflict = %v, want url field error", err)
+	}
+
+	current := validPost()
+	current.TitleImage = &ImageMetadata{ID: 1}
+	candidate := current
+	candidate.URL = "https://example.test/article"
+	if err := ValidateUpdate(current, candidate, now); !errors.As(err, &validationErr) || validationErr.Field != "url" {
+		t.Fatalf("update conflict = %v, want url field error", err)
+	}
+}
+
 func TestBodyImageLimit(t *testing.T) {
 	post := validPost()
 	for i := 1; i <= MaxBodyImages; i++ {
@@ -88,7 +108,7 @@ func TestValidateUpdateTransitions(t *testing.T) {
 		{name: "paused to scheduled", from: StatusPaused, to: StatusScheduled},
 		{name: "draft cannot jump to paused", from: StatusDraft, to: StatusPaused, wantErr: "status"},
 		{name: "posted cannot be edited", from: StatusPosted, to: StatusPosted, wantErr: "scheduled post is not editable"},
-		{name: "failed can be edited without changing state", from: StatusFailed, to: StatusFailed},
+		{name: "failed cannot be edited", from: StatusFailed, to: StatusFailed, wantErr: "scheduled post is not editable"},
 		{name: "failed cannot be set by user", from: StatusDraft, to: StatusFailed, wantErr: "status"},
 	}
 	for _, tt := range tests {
@@ -116,6 +136,7 @@ func TestValidateUpdateTransitions(t *testing.T) {
 	}
 }
 
+// SAFETY TEST: a post the scheduler owns (posting) can never be edited or deleted by a user.
 func TestCanEditAndDelete(t *testing.T) {
 	tests := []struct {
 		status    Status
@@ -128,7 +149,7 @@ func TestCanEditAndDelete(t *testing.T) {
 		{StatusPosting, false, false},
 		{StatusPosted, false, true},
 		{StatusNeedsReview, false, true},
-		{StatusFailed, true, true},
+		{StatusFailed, false, true},
 	}
 	for _, tt := range tests {
 		t.Run(string(tt.status), func(t *testing.T) {
@@ -157,6 +178,7 @@ func errString(err error) string {
 	return err.Error()
 }
 
+// SAFETY TEST: bulk actions never touch a posting row, and never resume an overdue post.
 func TestCheckBulk(t *testing.T) {
 	now := time.Date(2030, 1, 1, 12, 0, 0, 0, time.UTC)
 	future := now.Add(time.Hour)

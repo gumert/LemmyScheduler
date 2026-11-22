@@ -32,7 +32,9 @@ See the v3 [site](https://github.com/LemmyNet/lemmy/blob/0.19.12/crates/api_comm
 and [community](https://github.com/LemmyNet/lemmy/blob/0.19.12/crates/db_schema/src/source/community.rs)
 types. A public, unauthenticated probe of lemmy.world on 2026-11-20 returned
 404 for `/api/v4/site` and version `0.19.21-8-g081ada9cf` from `/api/v3/site`.
-Authenticated v3 calls remain unverified against a real instance.
+The user reported a successful login and community suggestions on their
+pre-1.0 instance. The exact version and authenticated error behavior were not
+reported and remain to be verified.
 
 ## Behavior to confirm on a real instance
 

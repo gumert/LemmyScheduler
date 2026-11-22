@@ -193,7 +193,10 @@ func (s *ImageServer) delete(w http.ResponseWriter, r *http.Request, postID, id 
 }
 
 func imageError(w http.ResponseWriter, err error) {
+	var validationErr *scheduledposts.ValidationError
 	switch {
+	case errors.As(err, &validationErr):
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	case errors.Is(err, scheduledposts.ErrNotFound), errors.Is(err, scheduledposts.ErrImageNotFound):
 		http.Error(w, err.Error(), http.StatusNotFound)
 	case errors.Is(err, scheduledposts.ErrNotEditable), errors.Is(err, scheduledposts.ErrImageInUse):

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -25,12 +26,15 @@ func (s scheduledPostStore) CreateScheduledPost(ctx context.Context, post schedu
 	query := `INSERT INTO scheduled_posts
 		(title, body, url, community, nsfw, status, scheduled_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, title, body, url, community, nsfw, status, scheduled_at, posted_at,
+		RETURNING id, title, body, url, community, nsfw, status, scheduled_at, posted_at, lemmy_post_id,
 		          lemmy_post_url, created_at, updated_at`
 	created, err := scanScheduledPost(s.pool.QueryRow(ctx, query,
 		post.Title, post.Body, post.URL, post.Community, post.NSFW, string(post.Status), post.ScheduledAt,
 	))
 	if err != nil {
+		if isURLTitleImageConflict(err) {
+			return scheduledposts.ScheduledPost{}, &scheduledposts.ValidationError{Field: "url", Message: "cannot be used with a title image"}
+		}
 		return scheduledposts.ScheduledPost{}, fmt.Errorf("db: create scheduled post: %w", err)
 	}
 	return created, nil
@@ -38,7 +42,7 @@ func (s scheduledPostStore) CreateScheduledPost(ctx context.Context, post schedu
 
 func (s scheduledPostStore) GetScheduledPost(ctx context.Context, id int64) (scheduledposts.ScheduledPost, error) {
 	post, err := scanScheduledPost(s.pool.QueryRow(ctx, `SELECT
-		id, title, body, url, community, nsfw, status, scheduled_at, posted_at,
+		id, title, body, url, community, nsfw, status, scheduled_at, posted_at, lemmy_post_id,
 		lemmy_post_url, created_at, updated_at
 		FROM scheduled_posts WHERE id = $1`, id))
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -68,7 +72,7 @@ func (s scheduledPostStore) ListScheduledPosts(ctx context.Context, options sche
 	if options.Descending {
 		direction, comparison = "DESC", "<"
 	}
-	query := `SELECT id, title, body, url, community, nsfw, status, scheduled_at, posted_at,
+	query := `SELECT id, title, body, url, community, nsfw, status, scheduled_at, posted_at, lemmy_post_id,
 		lemmy_post_url, created_at, updated_at
 		FROM scheduled_posts
 		WHERE (COALESCE(cardinality($1::text[]), 0) = 0 OR status = ANY($1::text[]))
@@ -110,8 +114,8 @@ func (s scheduledPostStore) UpdateScheduledPost(ctx context.Context, post schedu
 	query := `UPDATE scheduled_posts SET
 		title = $2, body = $3, url = $4, community = $5, nsfw = $6, status = $7,
 		scheduled_at = $8, updated_at = now()
-		WHERE id = $1 AND status IN ('draft', 'scheduled', 'paused', 'failed')
-		RETURNING id, title, body, url, community, nsfw, status, scheduled_at, posted_at,
+		WHERE id = $1 AND status IN ('draft', 'scheduled', 'paused')
+		RETURNING id, title, body, url, community, nsfw, status, scheduled_at, posted_at, lemmy_post_id,
 		          lemmy_post_url, created_at, updated_at`
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -135,6 +139,9 @@ func (s scheduledPostStore) UpdateScheduledPost(ctx context.Context, post schedu
 		return posts[0], nil
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
+		if isURLTitleImageConflict(err) {
+			return scheduledposts.ScheduledPost{}, &scheduledposts.ValidationError{Field: "url", Message: "cannot be used with a title image"}
+		}
 		return scheduledposts.ScheduledPost{}, fmt.Errorf("db: update scheduled post: %w", err)
 	}
 
@@ -146,6 +153,12 @@ func (s scheduledPostStore) UpdateScheduledPost(ctx context.Context, post schedu
 		return scheduledposts.ScheduledPost{}, scheduledposts.ErrNotEditable
 	}
 	return scheduledposts.ScheduledPost{}, errors.New("db: scheduled post update affected no row")
+}
+
+func isURLTitleImageConflict(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23514" &&
+		pgErr.ConstraintName == "scheduled_posts_url_title_image_exclusive"
 }
 
 // reconcileBodyImages runs inside the update transaction, which holds the post
@@ -358,9 +371,10 @@ func scanScheduledPost(row pgx.Row) (scheduledposts.ScheduledPost, error) {
 	var post scheduledposts.ScheduledPost
 	var status string
 	var scheduledAt, postedAt pgtype.Timestamptz
+	var lemmyPostID pgtype.Int8
 	err := row.Scan(
 		&post.ID, &post.Title, &post.Body, &post.URL, &post.Community, &post.NSFW, &status,
-		&scheduledAt, &postedAt, &post.LemmyPostURL, &post.CreatedAt, &post.UpdatedAt,
+		&scheduledAt, &postedAt, &lemmyPostID, &post.LemmyPostURL, &post.CreatedAt, &post.UpdatedAt,
 	)
 	if err != nil {
 		return scheduledposts.ScheduledPost{}, err
@@ -371,6 +385,9 @@ func scanScheduledPost(row pgx.Row) (scheduledposts.ScheduledPost, error) {
 	}
 	if postedAt.Valid {
 		post.PostedAt = &postedAt.Time
+	}
+	if lemmyPostID.Valid {
+		post.LemmyPostID = lemmyPostID.Int64
 	}
 	return post, nil
 }

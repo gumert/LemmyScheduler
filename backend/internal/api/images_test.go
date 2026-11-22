@@ -186,6 +186,11 @@ func TestImagesHTTPFailures(t *testing.T) {
 	if got := imageRequest(h, "DELETE", path+"/1", nil, nil).Code; got != http.StatusConflict {
 		t.Fatalf("delete referenced image = %d", got)
 	}
+	store.err = &scheduledposts.ValidationError{Field: "title_image", Message: "cannot be used with a URL"}
+	if res := imageRequest(h, "PUT", "/scheduled-posts/1/title-image", png, nil); res.Code != http.StatusBadRequest ||
+		!strings.Contains(res.Body.String(), "title_image") {
+		t.Fatalf("conflicting title image = %d: %s", res.Code, res.Body)
+	}
 	if got := imageRequest(h, "GET", "/scheduled-posts/not-a-number/images/1", nil, nil).Code; got != http.StatusBadRequest {
 		t.Fatalf("invalid post ID = %d", got)
 	}
